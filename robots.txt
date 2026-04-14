@@ -1,0 +1,14 @@
+User-agent: *
+Disallow: /admin/
+Disallow: /requests/
+Disallow: /includes/
+Disallow: /sources/
+Disallow: /langs/
+Disallow: /src/
+Disallow: /logout
+Disallow: /uploads/
+Allow: /uploads/avatars/
+Allow: /uploads/covers/
+Allow: /uploads/communities/
+Allow: /uploads/images/
+Sitemap: http://localhost:8888/dizzy/sitemap.xml
