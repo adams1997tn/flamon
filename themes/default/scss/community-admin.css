@@ -1,0 +1,278 @@
+/* Community management admin UI */
+.community_admin_section {
+  border: 1px solid #e4e9f2;
+  border-radius: 16px;
+  background:
+    radial-gradient(120% 120% at 100% 0%, rgba(246, 81, 105, 0.12) 0%, rgba(246, 81, 105, 0) 55%),
+    linear-gradient(180deg, #ffffff 0%, #f9fbff 100%);
+  box-shadow: 0 10px 24px rgba(16, 24, 40, 0.08);
+  gap: 14px;
+  padding: 16px 18px;
+  animation: communitySectionReveal 0.35s ease both;
+}
+
+.community_admin_section:nth-of-type(2) {
+  animation-delay: 0.05s;
+}
+
+.community_admin_section:nth-of-type(3) {
+  animation-delay: 0.1s;
+}
+
+.community_admin_section:nth-of-type(4) {
+  animation-delay: 0.15s;
+}
+
+.community_admin_section:nth-of-type(5) {
+  animation-delay: 0.2s;
+}
+
+.community_admin_section:nth-of-type(6) {
+  animation-delay: 0.25s;
+}
+
+.community_admin_section .i_general_title_box {
+  align-items: center;
+  border-bottom: 1px solid #e9eef6;
+  color: #1f2937;
+  display: flex;
+  flex-wrap: wrap;
+  font-size: 15px;
+  font-weight: 700;
+  gap: 8px;
+  letter-spacing: 0.2px;
+  padding-bottom: 10px;
+}
+
+.community_admin_section .i_general_title_box::before {
+  background: linear-gradient(90deg, #f65169, #fab429);
+  border-radius: 999px;
+  content: "";
+  height: 6px;
+  width: 28px;
+}
+
+.community_admin_form {
+  width: 100%;
+}
+
+.community_admin_list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: 100%;
+}
+
+.community_admin_row {
+  align-items: center;
+  background: #ffffff;
+  border: 1px solid #e6ebf3;
+  border-radius: 12px;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.8);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  justify-content: space-between;
+  padding: 12px 14px;
+  transition: box-shadow 0.2s ease, transform 0.2s ease, border-color 0.2s ease;
+}
+
+.community_admin_row:hover {
+  border-color: #f3c685;
+  box-shadow: 0 8px 18px rgba(15, 23, 42, 0.08);
+  transform: translateY(-1px);
+}
+
+.community_admin_meta {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 180px;
+}
+
+.community_admin_meta strong {
+  color: #111827;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.community_admin_meta span {
+  color: #6b7280;
+  font-size: 12px;
+  letter-spacing: 0.2px;
+}
+
+.community_admin_actions {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  justify-content: flex-end;
+  margin-left: auto;
+}
+
+.community_admin_actions.community_admin_permissions {
+  flex: 1 1 320px;
+  justify-content: flex-start;
+  margin-left: 0;
+}
+
+.community_admin_permissions {
+  display: grid;
+  gap: 8px;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  width: 100%;
+}
+
+.community_permission_item {
+  align-items: center;
+  background: #f6f8fc;
+  border: 1px solid #e5e9f2;
+  border-radius: 999px;
+  color: #475569;
+  display: inline-flex;
+  gap: 8px;
+  padding: 6px 10px;
+  transition: background 0.2s ease, border-color 0.2s ease;
+  white-space: nowrap;
+}
+
+.community_permission_item input {
+  accent-color: #f65169;
+  margin: 0;
+}
+
+.community_permission_item span {
+  font-size: 12px;
+  letter-spacing: 0.2px;
+}
+
+.community_permission_item:hover {
+  background: #fff4e6;
+  border-color: #f3c685;
+}
+
+.community_admin_section .i_general_row_box.flex_ {
+  gap: 10px;
+  justify-content: flex-end;
+  margin-top: 6px;
+}
+
+.community_admin_section .i_general_row_box.column {
+  gap: 6px;
+  margin-bottom: 12px;
+}
+
+.community_admin_section .i_general_row_box.column:last-child {
+  margin-bottom: 0;
+}
+
+.community_admin_section .i_input,
+.community_admin_section .i_textarea {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  min-height: 38px;
+  padding: 10px 12px;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.community_admin_section .i_input:focus,
+.community_admin_section .i_textarea:focus {
+  border-color: #f59f00;
+  box-shadow: 0 0 0 3px rgba(245, 159, 0, 0.18);
+}
+
+.community_admin_actions .i_input {
+  min-width: 180px;
+}
+
+.community_admin_section .i_nex_btn,
+.community_admin_section .i_btn_unsubscribe {
+  align-items: center;
+  background: linear-gradient(135deg, #f65169 0%, #fab429 100%);
+  border: 0;
+  border-radius: 10px;
+  box-shadow: 0 8px 18px rgba(246, 81, 105, 0.25);
+  color: #ffffff;
+  display: inline-flex;
+  font-size: 13px;
+  font-weight: 600;
+  justify-content: center;
+  letter-spacing: 0.2px;
+  line-height: 1;
+  min-height: 38px;
+  padding: 0 16px;
+  transition: transform 0.2s ease, box-shadow 0.2s ease, filter 0.2s ease;
+  white-space: nowrap;
+}
+
+.community_admin_section .i_nex_btn:hover,
+.community_admin_section .i_btn_unsubscribe:hover {
+  box-shadow: 0 12px 22px rgba(246, 81, 105, 0.3);
+  filter: brightness(1.02);
+  transform: translateY(-1px);
+}
+
+.community_admin_section .i_nex_btn:active,
+.community_admin_section .i_btn_unsubscribe:active {
+  transform: translateY(0);
+}
+
+.community_admin_section .i_btn_unsubscribe {
+  background: linear-gradient(135deg, #ef4444 0%, #f97316 100%);
+  box-shadow: 0 8px 18px rgba(239, 68, 68, 0.22);
+}
+
+.community_admin_section .i_btn_unsubscribe:hover {
+  box-shadow: 0 12px 22px rgba(239, 68, 68, 0.28);
+}
+
+.community_admin_section .i_nex_btn:focus-visible,
+.community_admin_section .i_btn_unsubscribe:focus-visible {
+  outline: 2px solid rgba(15, 23, 42, 0.2);
+  outline-offset: 2px;
+}
+
+.community_admin_section .admin_preview_image {
+  border-radius: 12px;
+  box-shadow: 0 12px 24px rgba(15, 23, 42, 0.12);
+  max-width: 240px;
+  width: 100%;
+}
+
+@keyframes communitySectionReveal {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (max-width: 960px) {
+  .community_admin_row {
+    align-items: flex-start;
+  }
+
+  .community_admin_actions {
+    justify-content: flex-start;
+    margin-left: 0;
+    width: 100%;
+  }
+
+  .community_admin_actions .i_input {
+    min-width: 0;
+    width: 100%;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .community_admin_section,
+  .community_admin_row {
+    animation: none;
+    transition: none;
+  }
+}

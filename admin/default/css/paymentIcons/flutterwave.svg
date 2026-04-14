@@ -1,0 +1,4 @@
+<svg width="120" height="40" viewBox="0 0 120 40" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Flutterwave">
+  <rect width="120" height="40" rx="6" fill="#ffffff"/>
+  <path d="M20 28V13h18v5H26v2h10v5H26v3h12v5H20zm34 0-4.6-15h6.4l1.9 7.7L60.7 13h6.2l2.7 7.7 1.9-7.7h6.4l-4.6 15h-6.3L64 20.4 60.7 28h-6.3zM90 13h7.1c5.8 0 9.5 3.6 9.5 7.8 0 4.2-3.6 7.8-9.5 7.8H90V13zm7.2 10.8c2.6 0 4-1.4 4-3 0-1.6-1.4-3-4-3H95v6h2.2z" fill="#ffb100"/>
+</svg>

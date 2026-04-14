@@ -1,0 +1,27 @@
+/* Admin Adsense layout fixes */
+.adsense_wrap {
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 16px;
+    align-items: stretch;
+}
+
+.adsense_card {
+    min-width: 0;
+}
+
+.adsense_card .i_general_row_box_item {
+    width: 100%;
+}
+
+.adsense_card .i_general_row_box_item select.i_input,
+.adsense_card .i_general_row_box_item input.i_input {
+    min-width: 0;
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
+}
+
+.adsense_inline_grid {
+    grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+    gap: 12px;
+}
