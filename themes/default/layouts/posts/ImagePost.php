@@ -33,8 +33,19 @@ echo isset($scheduledBadge) ? $scheduledBadge : ''; ?>
             </div>
         </div>
         <div class="i_post_i">
-            <div class="i_post_username"><a class="truncated" href="<?php echo iN_HelpSecure($base_url) . $userPostOwnerUsername; ?>"><?php echo iN_HelpSecure($userPostOwnerUserFullName); ?><?php echo html_entity_decode($publisherGender); ?><?php echo html_entity_decode($userVerifiedStatus); ?><?php echo html_entity_decode($wCanSee); ?><?php echo html_entity_decode($timeStatus);?></a></div>
-            <div class="i_post_shared_time"><?php if($userPostWhoCanSee == '4'){echo '<div class="premium_amount_he flex_ tabing">'.html_entity_decode($iN->iN_SelectedMenuIcon('40')).$userPostWantedCredit.'</div>';} ;?><?php if(!empty($communityBadge)){echo $communityBadge;}?><?php echo html_entity_decode($profileCategoryLink);?><a href="<?php echo iN_HelpSecure($base_url) . $userPostOwnerUsername; ?>">@<?php echo iN_HelpSecure($userPostOwnerUsername); ?></a> - <?php echo TimeAgo::ago($crTime, date('Y-m-d H:i:s')); ?><?php if(!empty($scheduledMeta)){ echo $scheduledMeta; } ?></div>
+            <div class="i_post_username">
+                <a class="truncated" href="<?php echo iN_HelpSecure($base_url) . $userPostOwnerUsername; ?>">
+                <?php echo iN_HelpSecure($userPostOwnerUserFullName); ?>
+                <?php echo html_entity_decode($userVerifiedStatus); ?>
+                <?php echo html_entity_decode($timeStatus);?></a></div>
+            <div class="i_post_shared_time">
+                <?php if($userPostWhoCanSee == '4'){echo '<div class="premium_amount_he flex_ tabing">'.html_entity_decode($iN->iN_SelectedMenuIcon('40')).$userPostWantedCredit.'</div>';} ;?>
+                <?php if(!empty($communityBadge)){echo $communityBadge;}?>
+                <?php echo html_entity_decode($profileCategoryLink);?>
+                <a href="<?php echo iN_HelpSecure($base_url) . $userPostOwnerUsername; ?>">@
+                    <?php echo iN_HelpSecure($userPostOwnerUsername); ?>
+            </a> - <?php echo date('H:i', strtotime($crTime)); ?>
+            <?php if(!empty($scheduledMeta)){ echo $scheduledMeta; } ?></div>
             <?php
             $isOwnerOrAdmin = ($logedIn != 0 && ($userPostOwnerID == $userID || $userType == '2'));
             $canModeratePost = ($logedIn != 0 && isset($communityModCanManagePosts) && $communityModCanManagePosts && isset($page) && $page === 'community');
@@ -729,7 +740,7 @@ if (!empty($communityReshareDisabled)) {
         </div>
         <?php if ($logedIn != 0 && $getUserPaymentMethodStatus && $userPostOwnerID != $userID) {?>
         <div class="i_post_footer_item">
-           <div class="i_post_item_btn transition in_tips flex_ tabing <?php echo iN_HelpSecure($loginFormClass); ?>" data-id="<?php echo iN_HelpSecure($userPostOwnerID); ?>" data-ppid="<?php echo iN_HelpSecure($userPostID); ?>"><?php echo html_entity_decode($iN->iN_SelectedMenuIcon('144')); ?> Thanks</div>
+           <div class="i_post_item_btn transition in_tips flex_ tabing <?php echo iN_HelpSecure($loginFormClass); ?>" data-id="<?php echo iN_HelpSecure($userPostOwnerID); ?>" data-ppid="<?php echo iN_HelpSecure($userPostID); ?>"><?php echo html_entity_decode($iN->iN_SelectedMenuIcon('144')); ?> </div>
         </div>
         <?php }?>
         <div class="i_post_footer_item">
@@ -986,3 +997,308 @@ if (!empty($communityReshareDisabled)) {
     </div>
     <!--/COMMENT FORM COMMENTS-->
 </div>
+
+<?php /* ====================================================================
+   FB-style custom photo viewer — injected ONCE per page (guarded).
+   Overrides lightGallery for post images only; videos (data-html) are left
+   to existing behavior. Works for dynamically loaded posts via delegation.
+   ==================================================================== */ ?>
+<?php if (!defined('DZ_FB_VIEWER_LOADED')): define('DZ_FB_VIEWER_LOADED', true); ?>
+<style>
+/* ---------- Dizzy custom photo viewer ---------- */
+.dz-viewer{
+    position:fixed;inset:0;z-index:99999;
+    display:none;
+    background:rgba(5,5,5,.96);
+    opacity:0;
+    transition:opacity .22s ease;
+    -webkit-user-select:none;user-select:none;
+    color:#fff;
+    font-family:'Inter','Segoe UI',system-ui,-apple-system,Roboto,Arial,sans-serif;
+}
+.dz-viewer.is-open{display:flex;opacity:1;}
+.dz-viewer.is-closing{opacity:0;}
+
+/* Stage holds the image */
+.dz-viewer__stage{
+    position:absolute;inset:0;
+    display:flex;align-items:center;justify-content:center;
+    padding:60px 72px;
+    box-sizing:border-box;
+    overflow:hidden;
+}
+.dz-viewer__img-wrap{
+    max-width:100%;max-height:100%;
+    display:flex;align-items:center;justify-content:center;
+    position:relative;
+}
+.dz-viewer__img{
+    max-width:100%;max-height:100%;
+    width:auto;height:auto;
+    object-fit:contain;
+    display:block;
+    opacity:0;transform:scale(.97);
+    transition:opacity .25s ease, transform .25s ease;
+    border-radius:4px;
+    box-shadow:0 10px 40px rgba(0,0,0,.5);
+}
+.dz-viewer__img.is-ready{opacity:1;transform:scale(1);}
+
+/* Video inside viewer */
+.dz-viewer__video{
+    max-width:100%;max-height:100%;
+    width:auto;height:auto;
+    display:block;outline:none;background:#000;
+}
+
+/* Loading spinner */
+.dz-viewer__spinner{
+    position:absolute;top:50%;left:50%;
+    width:38px;height:38px;margin:-19px 0 0 -19px;
+    border:2.5px solid rgba(255,255,255,.15);
+    border-top-color:#fff;
+    border-radius:50%;
+    animation:dzSpin .8s linear infinite;
+    pointer-events:none;
+    opacity:0;transition:opacity .2s ease;
+}
+.dz-viewer.is-loading .dz-viewer__spinner{opacity:1;}
+@keyframes dzSpin{to{transform:rotate(360deg);}}
+
+/* Close button */
+.dz-viewer__close{
+    position:absolute;top:16px;right:16px;
+    width:42px;height:42px;
+    display:flex;align-items:center;justify-content:center;
+    border:0;border-radius:50%;
+    background:rgba(255,255,255,.08);
+    color:#fff;cursor:pointer;
+    transition:background .2s ease, transform .2s ease;
+    z-index:2;
+}
+.dz-viewer__close:hover{background:rgba(255,255,255,.18);transform:scale(1.05);}
+.dz-viewer__close svg{width:18px;height:18px;}
+
+/* Counter */
+.dz-viewer__counter{
+    position:absolute;top:22px;left:22px;
+    font-size:13.5px;color:rgba(255,255,255,.75);
+    font-weight:500;letter-spacing:.3px;
+    z-index:2;
+}
+
+/* Arrows */
+.dz-viewer__nav{
+    position:absolute;top:50%;transform:translateY(-50%);
+    width:48px;height:48px;
+    display:flex;align-items:center;justify-content:center;
+    border:0;border-radius:50%;
+    background:rgba(255,255,255,.08);
+    color:#fff;cursor:pointer;
+    transition:background .2s ease, transform .2s ease, opacity .2s ease;
+    z-index:2;
+}
+.dz-viewer__nav:hover{background:rgba(255,255,255,.2);}
+.dz-viewer__nav:active{transform:translateY(-50%) scale(.95);}
+.dz-viewer__nav--prev{left:18px;}
+.dz-viewer__nav--next{right:18px;}
+.dz-viewer__nav[hidden],
+.dz-viewer__nav[disabled]{display:none;}
+.dz-viewer__nav svg{width:20px;height:20px;}
+
+/* Responsive */
+@media (max-width:640px){
+    .dz-viewer__stage{padding:48px 8px;}
+    .dz-viewer__nav{width:40px;height:40px;background:rgba(255,255,255,.06);}
+    .dz-viewer__nav--prev{left:6px;}
+    .dz-viewer__nav--next{right:6px;}
+    .dz-viewer__close{top:10px;right:10px;width:38px;height:38px;}
+    .dz-viewer__counter{top:16px;left:14px;font-size:12.5px;}
+}
+@media (prefers-reduced-motion: reduce){
+    .dz-viewer,.dz-viewer__img{transition:none;}
+}
+
+/* Lock body scroll when open */
+body.dz-viewer-open{overflow:hidden;}
+</style>
+
+<!-- Viewer DOM (single instance) -->
+<div class="dz-viewer" id="dzViewer" role="dialog" aria-modal="true" aria-label="Photo viewer">
+    <div class="dz-viewer__counter" id="dzViewerCounter"></div>
+    <button type="button" class="dz-viewer__close" id="dzViewerClose" aria-label="Close">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+    </button>
+    <button type="button" class="dz-viewer__nav dz-viewer__nav--prev" id="dzViewerPrev" aria-label="Previous">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
+    </button>
+    <button type="button" class="dz-viewer__nav dz-viewer__nav--next" id="dzViewerNext" aria-label="Next">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>
+    </button>
+    <div class="dz-viewer__stage" id="dzViewerStage">
+        <div class="dz-viewer__spinner"></div>
+        <div class="dz-viewer__img-wrap" id="dzViewerContent"></div>
+    </div>
+</div>
+
+<script>
+(function(){
+    'use strict';
+    if (window.__dzFbViewerLoaded) return; // guard: only init once
+    window.__dzFbViewerLoaded = true;
+
+    var viewer   = document.getElementById('dzViewer');
+    var stage    = document.getElementById('dzViewerStage');
+    var content  = document.getElementById('dzViewerContent');
+    var counter  = document.getElementById('dzViewerCounter');
+    var btnClose = document.getElementById('dzViewerClose');
+    var btnPrev  = document.getElementById('dzViewerPrev');
+    var btnNext  = document.getElementById('dzViewerNext');
+
+    // State
+    var slides   = [];   // [{src, type}]
+    var index    = 0;
+
+    /* ---------- Build a slide array from a gallery element ---------- */
+    function buildSlides(gallery, clickedItem){
+        var items = Array.prototype.slice.call(
+            gallery.querySelectorAll('.i_post_image_swip_wrapper')
+        );
+        // Dedupe swiper cloned slides
+        items = items.filter(function(el){
+            return !el.classList.contains('swiper-slide-duplicate');
+        });
+        // Build slide list (skip video items — they keep existing behavior)
+        var list = [];
+        var clickedIdx = 0;
+        items.forEach(function(el){
+            if (el.getAttribute('data-html')) return; // skip videos
+            var src = el.getAttribute('data-src')
+                   || el.getAttribute('data-bg')
+                   || (el.querySelector('img') && el.querySelector('img').src);
+            if (!src) return;
+            if (el === clickedItem) clickedIdx = list.length;
+            list.push({ src: src, type: 'image' });
+        });
+        return { slides: list, index: clickedIdx };
+    }
+
+    /* ---------- Render current slide ---------- */
+    function render(){
+        content.innerHTML = '';
+        var item = slides[index];
+        if (!item) return;
+
+        viewer.classList.add('is-loading');
+
+        var img = new Image();
+        img.className = 'dz-viewer__img';
+        img.alt = '';
+        img.onload = function(){
+            viewer.classList.remove('is-loading');
+            requestAnimationFrame(function(){ img.classList.add('is-ready'); });
+        };
+        img.onerror = function(){ viewer.classList.remove('is-loading'); };
+        img.src = item.src;
+        content.appendChild(img);
+
+        // Counter + nav visibility
+        if (slides.length > 1){
+            counter.textContent = (index + 1) + ' / ' + slides.length;
+            counter.style.display = '';
+            btnPrev.hidden = false; btnNext.hidden = false;
+        } else {
+            counter.style.display = 'none';
+            btnPrev.hidden = true; btnNext.hidden = true;
+        }
+    }
+
+    /* ---------- Open / close ---------- */
+    function open(list, startIdx){
+        if (!list || !list.length) return;
+        slides = list;
+        index  = Math.max(0, Math.min(startIdx || 0, list.length - 1));
+        viewer.classList.add('is-open');
+        document.body.classList.add('dz-viewer-open');
+        render();
+    }
+    function close(){
+        viewer.classList.add('is-closing');
+        setTimeout(function(){
+            viewer.classList.remove('is-open','is-closing','is-loading');
+            document.body.classList.remove('dz-viewer-open');
+            content.innerHTML = '';
+            slides = []; index = 0;
+        }, 200);
+    }
+    function prev(){ if (slides.length > 1){ index = (index - 1 + slides.length) % slides.length; render(); } }
+    function next(){ if (slides.length > 1){ index = (index + 1) % slides.length; render(); } }
+
+    /* ---------- Event wiring ---------- */
+    btnClose.addEventListener('click', close);
+    btnPrev.addEventListener('click', prev);
+    btnNext.addEventListener('click', next);
+
+    // Click outside image closes
+    stage.addEventListener('click', function(e){
+        if (e.target === stage || e.target === content) close();
+    });
+
+    // Keyboard
+    document.addEventListener('keydown', function(e){
+        if (!viewer.classList.contains('is-open')) return;
+        if (e.key === 'Escape')      { e.preventDefault(); close(); }
+        else if (e.key === 'ArrowLeft')  { e.preventDefault(); prev(); }
+        else if (e.key === 'ArrowRight') { e.preventDefault(); next(); }
+    });
+
+    // Touch swipe
+    var tStartX = 0, tStartY = 0, tMoved = false;
+    stage.addEventListener('touchstart', function(e){
+        if (!e.touches.length) return;
+        tStartX = e.touches[0].clientX; tStartY = e.touches[0].clientY; tMoved = false;
+    }, { passive:true });
+    stage.addEventListener('touchmove', function(e){
+        if (!e.touches.length) return;
+        if (Math.abs(e.touches[0].clientX - tStartX) > 10 ||
+            Math.abs(e.touches[0].clientY - tStartY) > 10) tMoved = true;
+    }, { passive:true });
+    stage.addEventListener('touchend', function(e){
+        if (!tMoved || !e.changedTouches.length) return;
+        var dx = e.changedTouches[0].clientX - tStartX;
+        var dy = e.changedTouches[0].clientY - tStartY;
+        if (Math.abs(dx) > 50 && Math.abs(dx) > Math.abs(dy)){
+            if (dx < 0) next(); else prev();
+        }
+    }, { passive:true });
+
+    /* ---------- Capture-phase click delegation on post image items.
+       Runs BEFORE lightGallery's own handler, stops propagation and opens
+       our custom viewer. Video items (data-html) are ignored so existing
+       video playback keeps working. ---------- */
+    document.addEventListener('click', function(e){
+        var item = e.target.closest && e.target.closest('.i_post_image_swip_wrapper');
+        if (!item) return;
+        // Only in post galleries
+        var gallery = item.closest('[id^="lightgallery"]');
+        if (!gallery) return;
+        if (!gallery.closest('.i_post_u_images')) return;
+        // Skip the play button / video items — keep original behavior
+        if (item.getAttribute('data-html')) return;
+        // Skip locked/blurred overlays
+        if (item.closest('.only_subs') || item.closest('.i_post_u_images.only_sb')) return;
+
+        var built = buildSlides(gallery, item);
+        if (!built.slides.length) return;
+
+        // Stop lightGallery & any other listener
+        e.preventDefault();
+        e.stopPropagation();
+        if (typeof e.stopImmediatePropagation === 'function') e.stopImmediatePropagation();
+
+        open(built.slides, built.index);
+    }, true); // capture = true, runs first
+})();
+</script>
+<?php endif; ?>
+

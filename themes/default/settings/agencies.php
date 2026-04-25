@@ -682,7 +682,7 @@ if (!$hasAgencyLock) {
                     $boostId = $boostData ? (int)($boostData['ab_id'] ?? 0) : 0;
                     $limitReached = ($agencyBoostMaxActive > 0 && $agencyBoostActiveCount >= $agencyBoostMaxActive);
                     $canCreate = !$isActive && !$limitReached && $isMemberActive;
-                    $pointsInsufficient = $agencyBoostPointPriceSetting > 0 && isset($userCurrentPoints) && (int)$userCurrentPoints < $agencyBoostPointPriceSetting;
+                    $pointsInsufficient = $agencyBoostPointPriceSetting > 0 && isset($userCurrentPoints) && (float)$userCurrentPoints < $agencyBoostPointPriceSetting;
                     $defaultMethod = (!$pointsInsufficient && $agencyBoostPointPriceSetting > 0) ? 'points' : 'card';
                     $priceDisplay = formatCurrency($agencyBoostPriceSetting, $defaultCurrency);
                 ?>

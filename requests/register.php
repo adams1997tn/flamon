@@ -200,7 +200,7 @@ if ($logedIn == '0') {
             DB::exec("UPDATE i_users SET light_dark = ? WHERE iuid = ?", [$defaultStyleValue, $userID]);
 			DB::exec("UPDATE i_users SET who_can_message = who_can_send_message WHERE iuid = ?", [$userID]);
 			if($beaCreatorStatus == 'auto_approve'){
-				DB::exec("UPDATE i_users SET certification_status = '2', validation_status = '2', condition_status = '2', fees_status = '2' , payout_status = '1' WHERE iuid = ?", [$userID]);
+				DB::exec("UPDATE i_users SET certification_status = '2', validation_status = '2', condition_status = '2', fees_status = '2' , payout_status = '1', user_verified_status = '1' WHERE iuid = ?", [$userID]);
 			}
 			DB::exec("UPDATE i_users SET last_login_time = ? WHERE iuid = ?", [$time,$userID]);
 			DB::exec("INSERT INTO i_friends (fr_one,fr_two,fr_time,fr_status) VALUES (?,?,?,'me')", [$userID,$userID,$time]);

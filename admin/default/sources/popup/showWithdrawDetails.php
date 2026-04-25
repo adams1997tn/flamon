@@ -35,8 +35,32 @@
             $paymentAddressRows[] = array($LANG['paypal_email'], $paypalAddress);
         }
     } elseif ($withdrawMethod === 'bank') {
+        $bankFieldMap = array(
+            'bank_country' => 'Bank Country',
+            'iban_number' => 'IBAN',
+            'routing_number' => 'Routing / SWIFT / BIC',
+            'account_number' => 'Account Number',
+            'account_holder_name' => 'Account Holder',
+            'street_address' => 'Street Address',
+            'bank_address_city' => 'City',
+            'bank_address_state' => 'State',
+            'postal_code' => 'Postal Code',
+            'bank_address_country' => 'Country',
+        );
+        foreach ($bankFieldMap as $bfKey => $bfLabel) {
+            $bfVal = isset($addressData[$bfKey]) ? (string)$addressData[$bfKey] : (string)($wDetUserData[$bfKey] ?? '');
+            if (trim($bfVal) !== '') {
+                $paymentAddressRows[] = array($bfLabel, $bfVal);
+            }
+        }
+        $bfPhoneCode = isset($addressData['phone_country_code']) ? (string)$addressData['phone_country_code'] : (string)($wDetUserData['phone_country_code'] ?? '');
+        $bfPhone = isset($addressData['phone_number']) ? (string)$addressData['phone_number'] : (string)($wDetUserData['phone_number'] ?? '');
+        if (trim($bfPhone) !== '') {
+            $paymentAddressRows[] = array('Phone', trim($bfPhoneCode . ' ' . $bfPhone));
+        }
+        // Legacy summary fallback (kept for old records)
         $bankAddress = isset($addressData['bank_account']) ? (string)$addressData['bank_account'] : (string)($wDetUserData['bank_account'] ?? '');
-        if ($bankAddress !== '') {
+        if (empty($paymentAddressRows) && $bankAddress !== '') {
             $paymentAddressRows[] = array($LANG['payout_details'], $bankAddress);
         }
     } elseif ($withdrawMethod === 'payoneer') {

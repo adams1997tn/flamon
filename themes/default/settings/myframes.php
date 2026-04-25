@@ -42,21 +42,14 @@ if ($frameData) {
                     <div class="plan_value">
                         <div class="plan_price tabing">
                             <div class="plan_price_in">
-                                <?php echo number_format($fDataPrice); ?>
-                                <span class="plan_point_icon">
-                                    <?php echo html_entity_decode($iN->iN_SelectedMenuIcon('40')); ?>
-                                </span>
+                                <?php echo iN_HelpSecure(formatCurrency($fDataPrice, $defaultCurrency)); ?>
                             </div>
                         </div>
-                        <div class="plan_point tabing flex_"><?php echo iN_HelpSecure($LANG['points']); ?></div>
                         <!---->
                         <div class="purchaseButton flex_ tabing">
                             <?php echo iN_HelpSecure($LANG['purchase']); ?>
                             <strong class="tabing flex_ purchaseButton_wrap">
-                                <?php echo number_format($fDataPrice); ?>
-                                <span class="prcsic">
-                                    <?php echo html_entity_decode($iN->iN_SelectedMenuIcon('40')); ?>
-                                </span>
+                                <?php echo iN_HelpSecure(formatCurrency($fDataPrice, $defaultCurrency)); ?>
                             </strong>
                             <div class="foramount"><?php echo iN_HelpSecure($LANG['for']) . ' ' . iN_HelpSecure(formatCurrency($frameMoneyEqual, $defaultCurrency)); ?></div>
                         </div>

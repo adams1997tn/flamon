@@ -6,20 +6,20 @@
                     <div class="caller_avatar" style="background-image:url(<?php echo iN_HelpSecure($callerUserAvatar); ?>);" aria-hidden="true"></div>
                 </div>
 
-                <?php $canAffordCall = $userCurrentPoints >= $videoCallPrice; ?>
+                <?php $canAffordCall = (float)$userCurrentPoints >= (float)$videoCallPrice; ?>
                 <div class="caller_title" id="videoCallModalTitle">
                     <?php echo iN_HelpSecure(preg_replace('/{.*?}/', $callerUserFullName, $LANG['invitation_will_be_send_after_payment'])); ?>
                 </div>
                 <div class="caller_det">
-                    <?php echo iN_HelpSecure(preg_replace('/{.*?}/', $videoCallPrice, $LANG['give_point'])); ?>
+                    <?php echo iN_HelpSecure(preg_replace('/{.*?}/', formatCurrency($videoCallPrice, $defaultCurrency), $LANG['give_point'])); ?>
                 </div>
                 <div class="current_point_box_video">
                     <div class="current_balance_box flex_ tabing_non_justify">
-                        <?php echo iN_HelpSecure($LANG['point_balance']); ?>
-                        <span class="crnblnc"><?php echo number_format($userCurrentPoints); ?></span>
+                        <?php echo iN_HelpSecure($LANG['wallet_balance'] ?? $LANG['point_balance']); ?>
+                        <span class="crnblnc"><?php echo iN_HelpSecure(formatCurrency($userCurrentPoints, $defaultCurrency)); ?></span>
                         <?php echo html_entity_decode($iN->iN_SelectedMenuIcon('40')); ?>
                         <a href="<?php echo iN_HelpSecure($base_url . 'purchase/purchase_point'); ?>" target="_blank" class="transitions">
-                            <?php echo iN_HelpSecure($LANG["get_points"]); ?>
+                            <?php echo iN_HelpSecure($LANG['add_funds'] ?? $LANG["get_points"]); ?>
                         </a>
                     </div>
                     <?php if (!$canAffordCall) { ?>

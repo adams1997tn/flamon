@@ -492,6 +492,8 @@ if ($version === '') {
 
 // Basic branding elements
 $logo = isset($inc['site_logo']) ? $inc['site_logo'] : NULL;
+$nightLogo = $iN->iN_GetSetting('site_night_logo', '');
+if (!is_string($nightLogo)) { $nightLogo = ''; }
 $autoDetectLanguageStatus = isset($inc['auto_detect_language_status']) ? $inc['auto_detect_language_status'] : NULL;
 $siteWatermarkLogo = isset($inc['site_watermark_logo']) ? $inc['site_watermark_logo'] : $logo;
 $favicon = isset($inc['site_favicon']) ? $inc['site_favicon'] : '1';
@@ -611,8 +613,8 @@ $mycdStatus = isset($inc['mycd_status']) ? $inc['mycd_status'] : NULL;
 $oceanregion = isset($inc['ocean_region']) ? $inc['ocean_region'] : NULL;
 $digitalOceanPublicBase = isset($inc['ocean_public_base']) ? $inc['ocean_public_base'] : NULL;
 
-// Subscription settings
-$subscriptionType = isset($inc['subscription_type']) ? $inc['subscription_type'] : NULL;
+// Subscription settings — forced to gateway/currency mode
+$subscriptionType = '1';
 
 // Affiliate registration and points system settings
 $dataAffilateData = $iN->iN_GetRegisterAffilateData('register', '1');
@@ -703,7 +705,7 @@ if (!in_array($defaultStyle, ['light', 'dark'], true)) {
 $lightDark = $defaultStyle;
 $socialLoginStatus = $inc['social_login_status'];
 
-// Point and currency system limits
+// Wallet deposit limits (currency)
 $maximumPointLimit = $inc['max_point_limit'];
 $minimumPointLimit = $inc['min_point_limit'];
 $maximumPointAmountLimit = $inc['max_point_amount_limit'];
@@ -824,6 +826,8 @@ $paginationLimit = $inc['pagination_limit'];
 
 // Site identity assets
 $siteLogoUrl = $base_url . $logo;
+$nightLogoUrl = !empty($nightLogo) ? ($base_url . $nightLogo) : $siteLogoUrl;
+$activeLogoUrl = (isset($lightDark) && (string)$lightDark === 'dark' && !empty($nightLogo)) ? $nightLogoUrl : $siteLogoUrl;
 $siteFavicon = $base_url . $favicon;
 
 // Tip feature configuration
@@ -942,8 +946,8 @@ $subscribeYearlyMinimumAmount = $inc['sub_yearly_minimum_amount'];
 // Minimum withdrawal threshold for creators
 $minimumWithdrawalAmount = $inc['minimum_withdrawal_amount'];
 
-// Point system conversion rate
-$onePointEqual = $inc['one_point'];
+// Currency mode: 1 point = $1 (points ARE dollars now)
+$onePointEqual = 1;
 
 // Email configuration settings
 $smtpOrMail = $inc['smtp_or_mail'];
@@ -1521,6 +1525,20 @@ if (isset($_COOKIE[$cookieName])) {
         $mercadoPagoAlias = isset($userData['mercadopago_alias']) ? $userData['mercadopago_alias'] : NULL;
         $mercadoPagoCvu = isset($userData['mercadopago_cvu']) ? $userData['mercadopago_cvu'] : NULL;
 
+        // Structured bank-transfer payout details
+        $bankCountry        = isset($userData['bank_country']) ? $userData['bank_country'] : NULL;
+        $ibanNumber         = isset($userData['iban_number']) ? $userData['iban_number'] : NULL;
+        $routingNumber      = isset($userData['routing_number']) ? $userData['routing_number'] : NULL;
+        $accountNumber      = isset($userData['account_number']) ? $userData['account_number'] : NULL;
+        $accountHolderName  = isset($userData['account_holder_name']) ? $userData['account_holder_name'] : NULL;
+        $phoneCountryCode   = isset($userData['phone_country_code']) ? $userData['phone_country_code'] : NULL;
+        $phoneNumber        = isset($userData['phone_number']) ? $userData['phone_number'] : NULL;
+        $streetAddress      = isset($userData['street_address']) ? $userData['street_address'] : NULL;
+        $country            = isset($userData['bank_address_country']) ? $userData['bank_address_country'] : NULL;
+        $state              = isset($userData['bank_address_state']) ? $userData['bank_address_state'] : NULL;
+        $city               = isset($userData['bank_address_city']) ? $userData['bank_address_city'] : NULL;
+        $postalCode         = isset($userData['postal_code']) ? $userData['postal_code'] : NULL;
+
         // Subscription plans
         $WeeklySubDetail = $iN->iN_GetUserSubscriptionPlanDetails($userID, 'weekly');
         $MonthlySubDetail = $iN->iN_GetUserSubscriptionPlanDetails($userID, 'monthly');
@@ -1529,7 +1547,7 @@ if (isset($_COOKIE[$cookieName])) {
         // Monthly earnings calculation
         $calculateCurrentEarning = $iN->iN_CalculateCurrentMonthEarning($userID);
         $cEarning = isset($calculateCurrentEarning['calculate']) ? $calculateCurrentEarning['calculate'] : '0';
-        // Wallet data
+        // Wallet data (wallet_points now stores currency balance)
         $userCurrentPoints = isset($userData['wallet_points']) ? $userData['wallet_points'] : '0';
         $userWallet = isset($userData['wallet_money']) ? $userData['wallet_money'] : '0';
 

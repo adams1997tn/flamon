@@ -47,7 +47,7 @@
                                     </div>
 
                                     <div class="plan_point tabing flex_">
-                                        <?php echo iN_HelpSecure($LANG['points']); ?>
+                                        <?php echo iN_HelpSecure($LANG['gift_point'] ?? 'Gift Credit'); ?>
                                     </div>
 
                                     <div class="purchaseButton flex_ tabing">

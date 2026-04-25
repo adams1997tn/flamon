@@ -1025,7 +1025,7 @@ div {
 }
 
 .i_logo img {
-  width: 50px;
+  width: 106px;
   height: 50px;
 }
 
@@ -28906,38 +28906,38 @@ input[type=range]:focus::-ms-fill-lower {
   border-radius: 999px;
 }
 
-.userIsOnline {
-    font-size: 10px;
-    font-weight: 300;
-    border-radius: 5px;
+.userIsOnline,
+.userIsOffline {
+    display: inline-block;
+    width: 10px;
+    height: 10px;
     margin-left: 6px;
-    padding-right: 4px;
-    background-color:#43a047;
-    color:#ffffff;
+    padding: 0;
+    border-radius: 50%;
+    border: 2px solid #18191A;
+    vertical-align: middle;
+    font-size: 0;
+    line-height: 0;
+    color: transparent;
+    -webkit-box-shadow: 0 0 0 1px rgba(255,255,255,0.08), 0 0 6px rgba(0,0,0,0.35);
+            box-shadow: 0 0 0 1px rgba(255,255,255,0.08), 0 0 6px rgba(0,0,0,0.35);
+}
+
+.userIsOnline {
+    background-color: #22c55e;
+    -webkit-box-shadow: 0 0 0 1px rgba(255,255,255,0.08), 0 0 0 3px rgba(34,197,94,0.28);
+            box-shadow: 0 0 0 1px rgba(255,255,255,0.08), 0 0 0 3px rgba(34,197,94,0.28);
 }
 
 .userIsOffline {
-  font-size: 10px;
-  font-weight: 300;
-  border-radius: 5px;
-  margin-left: 6px;
-  padding-right: 4px;
-  background-color:#e53935;
-  color:#ffffff;
+    background-color: #ef4444;
+    -webkit-box-shadow: 0 0 0 1px rgba(255,255,255,0.08), 0 0 0 3px rgba(239,68,68,0.28);
+            box-shadow: 0 0 0 1px rgba(255,255,255,0.08), 0 0 0 3px rgba(239,68,68,0.28);
 }
 
-.userIsOffline::before, .userIsOnline::before {
-  content: "";
-  width: 0.25rem;
-  height: 0.25rem;
-  margin: 0 0.25rem;
-  background: #858fad;
-  border-radius: 50%;
-  display: inline-block;
-  -ms-flex-item-align: center;
-      -ms-grid-row-align: center;
-      align-self: center;
-    border:1px solid #ffffff;
+.userIsOnline::before,
+.userIsOffline::before {
+    content: none;
 }
 
 /*Version 4.2 FINISHED*/
@@ -30221,13 +30221,7 @@ a.i_p_categoryp:hover {
     margin-right:4px;
 }
 
-.userIsOffline::before  {
-  background: #7a0a1b !important;
-}
-
-.userIsOnline::before {
-  background: #0097a7 !important;
-}
+/* userIsOnline / userIsOffline styled as status circles above */
 
 .i_opennewtab {
  text-decoration:none;

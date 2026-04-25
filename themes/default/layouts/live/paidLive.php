@@ -173,7 +173,7 @@ $questions = $isLiveQAEnabled ? $iN->iN_GetLiveQuestions($liveID, $isLiveCreator
                         <?php  if($p_friend_status != 'me' && $isLiveGiftEnabled){?>
                         <?php include "liveCoinList.php";?>
                         <div class="live_coin_current_balance">
-                            <div class="current_balance_box flex_ tabing_non_justify"><?php echo iN_HelpSecure($LANG['point_balance']);?> <span class="crnblnc"><?php echo number_format($userCurrentPoints);?></span> <?php echo html_entity_decode($iN->iN_SelectedMenuIcon('40'));?><a href="<?php echo $base_url.'purchase/purchase_point';?>" target="blank_" class="transitions"><?php echo iN_HelpSecure($LANG["get_points"]);?></a></div>
+                            <div class="current_balance_box flex_ tabing_non_justify"><?php echo iN_HelpSecure($LANG['wallet_balance'] ?? $LANG['point_balance']);?> <span class="crnblnc"><?php echo iN_HelpSecure(formatCurrency($userCurrentPoints, $defaultCurrency));?></span> <?php echo html_entity_decode($iN->iN_SelectedMenuIcon('40'));?><a href="<?php echo $base_url.'purchase/purchase_point';?>" target="blank_" class="transitions"><?php echo iN_HelpSecure($LANG['add_funds'] ?? $LANG["get_points"]);?></a></div>
                         </div>
                         <?php }?>
                         <div class="currentt_live_streamings_list_container tabing">
@@ -270,8 +270,7 @@ $questions = $isLiveQAEnabled ? $iN->iN_GetLiveQuestions($liveID, $isLiveCreator
                <div class="owner_avatar" style="background-image:url(<?php echo iN_HelpSecure($liveCreatorAvatar, FILTER_VALIDATE_URL);?>);"></div>
                <div class="album-details"><?php echo iN_HelpSecure($LANG['paying_point_for_live_streaming']);?></div>
                 <div class="album-wanted-point">
-                  <div><?php echo html_entity_decode($liveCredit);?></div>
-                  <span><?php echo iN_HelpSecure($LANG['points']);?></span>
+                  <div><?php echo formatCurrency($liveCredit, $defaultCurrency);?></div>
                 </div>
             </div>
           </div>

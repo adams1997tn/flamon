@@ -92,12 +92,7 @@ $safeMercadoPagoCvu = (string)$iN->iN_Secure($mercadoPagoCvu ?? '');
                         <div class="i_payout_"><input type="text" class="transition aval" id="paypalere" placeholder="<?php echo iN_HelpSecure($LANG['confirm_paypal_email']);?>" value="<?php echo iN_HelpSecure($safePaypalEmail);?>"></div>
                     </div>
                 <?php } elseif ($methodKey === 'bank') {?>
-                    <div class="i_set_subscription_fee margin-bottom-ten">
-                        <div class="i_subs_currency"><?php echo html_entity_decode($iN->iN_SelectedMenuIcon('81'));?></div>
-                        <div class="i_payout_">
-                            <textarea name="bank" id="bank_transfer" class="bank_textarea" placeholder="<?php echo iN_HelpSecure($LANG['bank_transfer_placeholder']);?>"><?php echo iN_HelpSecure($iN->iN_Secure($bankAccount));?></textarea>
-                        </div>
-                    </div>
+                    <?php include __DIR__ . '/../layouts/widgets/bank_transfer_form.php'; ?>
                 <?php } elseif ($methodKey === 'payoneer') {?>
                     <div class="i_set_subscription_fee margin-bottom-ten">
                         <div class="i_subs_currency"><?php echo html_entity_decode($iN->iN_SelectedMenuIcon('196'));?></div>
@@ -159,3 +154,5 @@ $safeMercadoPagoCvu = (string)$iN->iN_Secure($mercadoPagoCvu ?? '');
      </div>
   </div>
 </div>
+<link rel="stylesheet" href="<?php echo iN_HelpSecure($base_url); ?>themes/<?php echo iN_HelpSecure($currentTheme); ?>/css/bank_transfer_form.css?v=<?php echo iN_HelpSecure($version); ?>">
+<script src="<?php echo iN_HelpSecure($base_url); ?>themes/<?php echo iN_HelpSecure($currentTheme); ?>/js/bank_transfer_form.js?v=<?php echo iN_HelpSecure($version); ?>"></script>

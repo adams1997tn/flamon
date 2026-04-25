@@ -30,9 +30,9 @@ $OnlineStatus = date("c", time());
 $onlineWindowSeconds = 180;
 $oStatus = time() - $onlineWindowSeconds;
 if ((int) $userSharedPostOwnerUserLastLogin > $oStatus) {
- $timeStatus = '<div class="userIsOnline flex_ tabing">' . $LANG['online'] . '</div>';
+ $timeStatus = '<div class="userIsOnline flex_ tabing"></div>';
 } else {
- $timeStatus = '<div class="userIsOffline flex_ tabing">' . $LANG['offline'] . '</div>';
+ $timeStatus = '<div class="userIsOffline flex_ tabing"></div>';
 }
 $userSharedPostSharedID = $sharedPostData['shared_post_id'] ?? null;
 $userSharedPostWhoCanSee = $iN->iN_CheckWhoCanSeePost($userPostSharedID);

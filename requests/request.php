@@ -148,7 +148,7 @@ if (!function_exists('rq_resolve_bin_path')) {
         $path = rq_normalize_bin_path($path);
         if ($path !== '') {
             if (preg_match('~[\\\\/]~', $path)) {
-                if (is_file($path) && is_executable($path)) {
+                if (is_file($path)) {
                     return $path;
                 }
             } else {
@@ -158,8 +158,17 @@ if (!function_exists('rq_resolve_bin_path')) {
         if (!function_exists('shell_exec')) {
             return $path !== '' ? $path : null;
         }
-        $cmd = 'command -v ' . escapeshellarg($fallback) . ' 2>/dev/null || which ' . escapeshellarg($fallback) . ' 2>/dev/null';
+        $isWindows = stripos(PHP_OS_FAMILY ?? PHP_OS, 'Windows') !== false;
+        if ($isWindows) {
+            $cmd = 'where.exe ' . escapeshellarg($fallback) . ' 2>NUL';
+        } else {
+            $cmd = 'command -v ' . escapeshellarg($fallback) . ' 2>/dev/null || which ' . escapeshellarg($fallback) . ' 2>/dev/null';
+        }
         $resolved = trim((string) @shell_exec($cmd));
+        // 'where' on Windows may return multiple lines; take the first
+        if ($resolved !== '' && strpos($resolved, "\n") !== false) {
+            $resolved = trim(strtok($resolved, "\n"));
+        }
         return $resolved !== '' ? $resolved : null;
     }
 }
@@ -8224,9 +8233,9 @@ if ($type == 'upload') {
                             require_once '../includes/createVideoThumbnail.php';
 
                             // Resolve ffmpeg binary path if not explicitly configured
-                            $ffmpegBin = !empty($ffmpegPath) ? $ffmpegPath : '';
+                            $ffmpegBin = !empty($ffmpegPath) ? trim((string)$ffmpegPath) : '';
                             if ($ffmpegBin === '' && function_exists('shell_exec')) {
-                                $ffmpegBin = trim(@shell_exec('command -v ffmpeg 2>/dev/null || which ffmpeg 2>/dev/null'));
+                                $ffmpegBin = trim((string)@shell_exec('command -v ffmpeg 2>/dev/null || which ffmpeg 2>/dev/null'));
                             }
                             if ($ffmpegBin === '') { $ffmpegBin = 'ffmpeg'; }
 
@@ -8546,7 +8555,26 @@ if ($type == 'upload') {
 	}
 	/*Accept Conditions by Clicking Next Button*/
 	if ($type == 'acceptConditions') {
-		$conditionsAccept = $iN->iN_AcceptConditions($userID);
+		$instagramUrl = trim((string)($iN->iN_Secure($_POST['instagram_url'] ?? '')));
+		$tiktokUrl = trim((string)($iN->iN_Secure($_POST['tiktok_url'] ?? '')));
+
+		// At least one social account required
+		if ($instagramUrl === '' && $tiktokUrl === '') {
+			echo 'social_required';
+			exit();
+		}
+
+		// Validate URLs
+		if ($instagramUrl !== '' && !filter_var($instagramUrl, FILTER_VALIDATE_URL)) {
+			echo 'invalid_url';
+			exit();
+		}
+		if ($tiktokUrl !== '' && !filter_var($tiktokUrl, FILTER_VALIDATE_URL)) {
+			echo 'invalid_url';
+			exit();
+		}
+
+		$conditionsAccept = $iN->iN_AcceptConditions($userID, $instagramUrl, $tiktokUrl);
 		if ($conditionsAccept) {
 			echo '200';
 		}
@@ -8680,6 +8708,42 @@ if ($type == 'upload') {
 						echo 'bank_warning';
 						exit();
 					}
+					// Premium structured bank transfer fields
+					$bankCountry       = trim((string)($_POST['bank_country'] ?? ''));
+					$ibanNumber        = strtoupper(preg_replace('/\s+/', '', (string)($_POST['iban_number'] ?? '')));
+					$routingNumber     = trim((string)($_POST['routing_number'] ?? ''));
+					$accountNumber     = trim((string)($_POST['account_number'] ?? ''));
+					$confirmAccount    = trim((string)($_POST['confirm_account_number'] ?? ''));
+					$accountHolderName = trim((string)($_POST['account_holder_name'] ?? ''));
+					$phoneCountryCode  = trim((string)($_POST['phone_country_code'] ?? ''));
+					$phoneNumber       = trim((string)($_POST['phone_number'] ?? ''));
+					$streetAddress     = trim((string)($_POST['street_address'] ?? ''));
+					$btCountry         = trim((string)($_POST['country'] ?? ''));
+					$btState           = trim((string)($_POST['state'] ?? ''));
+					$btCity            = trim((string)($_POST['city'] ?? ''));
+					$btPostal          = trim((string)($_POST['postal_code'] ?? ''));
+					if ($bankCountry === '' || $accountNumber === '' || $accountHolderName === ''
+						|| $phoneCountryCode === '' || $phoneNumber === '' || $streetAddress === ''
+						|| $btCountry === '' || $btState === '' || $btCity === '' || $btPostal === '') {
+						echo 'bank_warning';
+						exit();
+					}
+					if ($accountNumber !== $confirmAccount) {
+						echo 'bank_warning';
+						exit();
+					}
+					$payoutMethodData['bank_country']         = $iN->iN_Secure($bankCountry);
+					$payoutMethodData['iban_number']          = $iN->iN_Secure($ibanNumber);
+					$payoutMethodData['routing_number']       = $iN->iN_Secure($routingNumber);
+					$payoutMethodData['account_number']       = $iN->iN_Secure($accountNumber);
+					$payoutMethodData['account_holder_name']  = $iN->iN_Secure($accountHolderName);
+					$payoutMethodData['phone_country_code']   = $iN->iN_Secure($phoneCountryCode);
+					$payoutMethodData['phone_number']         = $iN->iN_Secure($phoneNumber);
+					$payoutMethodData['street_address']       = $iN->iN_Secure($streetAddress);
+					$payoutMethodData['country']              = $iN->iN_Secure($btCountry);
+					$payoutMethodData['state']                = $iN->iN_Secure($btState);
+					$payoutMethodData['city']                 = $iN->iN_Secure($btCity);
+					$payoutMethodData['postal_code']          = $iN->iN_Secure($btPostal);
 				}
 
 				$insertPayout = $iN->iN_SetPayout($userID, $paypalEmail, $bankAccount, $defaultMethod, $payoutMethodData);
@@ -9615,6 +9679,42 @@ if ($type == 'upload') {
 					echo 'bank_warning';
 					exit();
 				}
+				// Premium structured bank transfer fields
+				$bankCountry       = trim((string)($_POST['bank_country'] ?? ''));
+				$ibanNumber        = strtoupper(preg_replace('/\s+/', '', (string)($_POST['iban_number'] ?? '')));
+				$routingNumber     = trim((string)($_POST['routing_number'] ?? ''));
+				$accountNumber     = trim((string)($_POST['account_number'] ?? ''));
+				$confirmAccount    = trim((string)($_POST['confirm_account_number'] ?? ''));
+				$accountHolderName = trim((string)($_POST['account_holder_name'] ?? ''));
+				$phoneCountryCode  = trim((string)($_POST['phone_country_code'] ?? ''));
+				$phoneNumber       = trim((string)($_POST['phone_number'] ?? ''));
+				$streetAddress     = trim((string)($_POST['street_address'] ?? ''));
+				$btCountry         = trim((string)($_POST['country'] ?? ''));
+				$btState           = trim((string)($_POST['state'] ?? ''));
+				$btCity            = trim((string)($_POST['city'] ?? ''));
+				$btPostal          = trim((string)($_POST['postal_code'] ?? ''));
+				if ($bankCountry === '' || $accountNumber === '' || $accountHolderName === ''
+					|| $phoneCountryCode === '' || $phoneNumber === '' || $streetAddress === ''
+					|| $btCountry === '' || $btState === '' || $btCity === '' || $btPostal === '') {
+					echo 'bank_warning';
+					exit();
+				}
+				if ($accountNumber !== $confirmAccount) {
+					echo 'bank_warning';
+					exit();
+				}
+				$payoutMethodData['bank_country']         = $iN->iN_Secure($bankCountry);
+				$payoutMethodData['iban_number']          = $iN->iN_Secure($ibanNumber);
+				$payoutMethodData['routing_number']       = $iN->iN_Secure($routingNumber);
+				$payoutMethodData['account_number']       = $iN->iN_Secure($accountNumber);
+				$payoutMethodData['account_holder_name']  = $iN->iN_Secure($accountHolderName);
+				$payoutMethodData['phone_country_code']   = $iN->iN_Secure($phoneCountryCode);
+				$payoutMethodData['phone_number']         = $iN->iN_Secure($phoneNumber);
+				$payoutMethodData['street_address']       = $iN->iN_Secure($streetAddress);
+				$payoutMethodData['country']              = $iN->iN_Secure($btCountry);
+				$payoutMethodData['state']                = $iN->iN_Secure($btState);
+				$payoutMethodData['city']                 = $iN->iN_Secure($btCity);
+				$payoutMethodData['postal_code']          = $iN->iN_Secure($btPostal);
 			}
 
 			$insertPayout = $iN->iN_UpdatePayout($userID, $paypalEmail, $bankAccount, $defaultMethod, $payoutMethodData);
@@ -13735,9 +13835,9 @@ if ($type == 'stories') {
                         require_once '../includes/createVideoThumbnail.php';
 
                         // Resolve ffmpeg binary path if not configured
-                        $ffmpegBin = !empty($ffmpegPath) ? $ffmpegPath : '';
+                        $ffmpegBin = !empty($ffmpegPath) ? trim((string)$ffmpegPath) : '';
                         if ($ffmpegBin === '' && function_exists('shell_exec')) {
-                            $ffmpegBin = trim(@shell_exec('command -v ffmpeg 2>/dev/null || which ffmpeg 2>/dev/null'));
+                            $ffmpegBin = trim((string)@shell_exec('command -v ffmpeg 2>/dev/null || which ffmpeg 2>/dev/null'));
                         }
                         if ($ffmpegBin === '') { $ffmpegBin = 'ffmpeg'; }
                         rq_debug('stories:ffmpeg_bin', ['bin' => $ffmpegBin]);
@@ -14108,6 +14208,8 @@ if ($type == 'stories') {
 								$postTypeIcon = '<div class="video_n">' . $iN->iN_SelectedMenuIcon('52') . '</div>';
 								$UploadedFilePath = $base_url . 'uploads/files/' . $d . '/' . $getFilename;
 								if ($ffmpegCanConvert) {
+									require_once '../includes/convertToMp4Format.php';
+									require_once '../includes/createVideoThumbnail.php';
 									$convertUrl = '../uploads/files/' . $d . '/' . $UploadedFileName . '.mp4';
 									$videoTumbnailPath = '../uploads/files/' . $d . '/' . $UploadedFileName . '.jpg';
 									$xVideoFirstPath = '../uploads/xvideos/' . $d . '/' . $UploadedFileName . '.mp4';
@@ -14115,46 +14217,39 @@ if ($type == 'stories') {
 
 									$pathFile = 'uploads/files/' . $d . '/' . $UploadedFileName . '.mp4';
 									$pathXFile = 'uploads/xvideos/' . $d . '/' . $UploadedFileName . '.mp4';
-									if ($ext == 'mpg') {
-										$cmd = shell_exec("$ffmpegPath -i $UploadedFilePath -c copy -map 0 $convertUrl");
-										$cmd = shell_exec("$ffmpegPath -i $convertUrl -ss 00:00:01.000 -vframes 1 $videoTumbnailPath 2>&1");
-									} else if ($ext == 'mov') {
-										$cmd = shell_exec("$ffmpegPath -i $UploadedFilePath -vcodec copy -acodec copy $convertUrl");
-										$cmd = shell_exec("$ffmpegPath -ss 00:00:01.000 -i $convertUrl -vframes 1 $videoTumbnailPath 2>&1");
-									} else if ($ext == 'wmv') {
-										$cmd = shell_exec("$ffmpegPath -i $UploadedFilePath -c copy -map 0 $convertUrl");
-										$cmd = shell_exec("$ffmpegPath -i $convertUrl -ss 00:00:01.000 -vframes 1 $videoTumbnailPath 2>&1");
-									} else if ($ext == 'avi') {
-										$cmd = shell_exec("$ffmpegPath -i $UploadedFilePath -vcodec h264 -acodec aac -strict -2 $convertUrl 2>&1");
-										$cmd = shell_exec("$ffmpegPath -i $convertUrl -ss 00:00:01.000 -vframes 1 $videoTumbnailPath 2>&1");
-									} else if ($ext == 'webm') {
-										$cmd = shell_exec("$ffmpegPath -i $UploadedFilePath -crf 1 -c:v libx264 $convertUrl");
-										$cmd = shell_exec("$ffmpegPath -i $convertUrl -ss 00:00:01.000 -vframes 1 $videoTumbnailPath 2>&1");
-									} else if ($ext == 'mpeg') {
-										$cmd = shell_exec("$ffmpegPath -i $UploadedFilePath -c copy -map 0 $convertUrl");
-										$cmd = shell_exec("$ffmpegPath -i $convertUrl -ss 00:00:01.000 -vframes 1 $videoTumbnailPath 2>&1");
-									} else if ($ext == 'flv') {
-										$cmd = shell_exec("$ffmpegPath -i $UploadedFilePath -c:a aac -strict -2 -b:a 128k -c:v libx264 -profile:v baseline $convertUrl");
-										$cmd = shell_exec("$ffmpegPath -i $convertUrl -ss 00:00:01.000 -vframes 1 $videoTumbnailPath 2>&1");
-									} else if ($ext == 'm4v') {
-										$cmd = shell_exec("$ffmpegPath -i $UploadedFilePath -c copy $convertUrl");
-										$cmd = shell_exec("$ffmpegPath -i $convertUrl -ss 00:00:01.000 -vframes 1 $videoTumbnailPath 2>&1");
-									} else if ($ext == 'mkv') {
-										$cmd = shell_exec("$ffmpegPath -i $UploadedFilePath -codec copy -strict -2 $convertUrl 2>&1");
-										$cmd = shell_exec("$ffmpegPath -i $convertUrl -ss 00:00:01.000 -vframes 1 $videoTumbnailPath 2>&1");
-									}else if($ext == '3gp'){
-										$cmd = shell_exec("$ffmpegPath -i $UploadedFilePath -acodec copy -vcodec copy $convertUrl 2>&1");
-										$cmd = shell_exec("$ffmpegPath -i $convertUrl -ss 00:00:01.000 -vframes 1 $videoTumbnailPath 2>&1");
-									}else{
-										$cmd = shell_exec("$ffmpegPath -i $convertUrl -ss 00:00:01.000 -vframes 1 $videoTumbnailPath 2>&1");
+
+									// Use safe local file path for input (not URL)
+									$localSourcePath = '../uploads/files/' . $d . '/' . $getFilename;
+									$ffmpegExec = escapeshellcmd($ffmpegPath ?: 'ffmpeg');
+
+									// Convert to MP4
+									$convertedFs = convertToMp4Format($ffmpegPath, $localSourcePath, '../uploads/files/' . $d, $UploadedFileName);
+									if (!$convertedFs || !file_exists($convertedFs)) {
+										$convertedFs = $localSourcePath;
 									}
 
+									// Generate thumbnail using the helper
+									$thumbFs = createVideoThumbnailInSameDir($ffmpegPath, $convertedFs);
+
+									// Generate 4-second preview clip
+									$safeCmd = $ffmpegExec . ' -hide_banner -loglevel error -y'
+										. ' -ss 00:00:01 -i ' . escapeshellarg($convertedFs)
+										. ' -c copy -movflags +faststart -avoid_negative_ts make_zero'
+										. ' -t 00:00:04 ' . escapeshellarg($xVideoFirstPath) . ' 2>&1';
+									@shell_exec($safeCmd);
+
+									// Generate watermarked/drawtext version
 									$up_url = watermark_label($base_url, $userName);
-									$cmd = shell_exec("$ffmpegPath -ss 00:00:01 -i $convertUrl -c copy -t 00:00:04 $xVideoFirstPath 2>&1");
 									if($drawTextStatus == '1'){
-										$cmdText = shell_exec("$ffmpegPath -i $convertUrl -vf drawtext=fontfile=../src/droidsanschinese.ttf:text=$up_url:fontcolor=red:fontsize=18:x=10:y=H-th-10 $textVideoPath 2>&1");
+										$cmdText = @shell_exec($ffmpegExec . ' -hide_banner -loglevel error -y'
+											. ' -i ' . escapeshellarg($convertedFs)
+											. ' -vf ' . escapeshellarg('drawtext=fontfile=../src/droidsanschinese.ttf:text=' . $up_url . ':fontcolor=red:fontsize=18:x=10:y=H-th-10')
+											. ' ' . escapeshellarg($textVideoPath) . ' 2>&1');
 									}else{
-										$cmdText = shell_exec("$ffmpegPath -i $convertUrl -c:a copy -c:v libx264 -preset superfast -profile:v baseline $textVideoPath 2>&1");
+										$cmdText = @shell_exec($ffmpegExec . ' -hide_banner -loglevel error -y'
+											. ' -i ' . escapeshellarg($convertedFs)
+											. ' -c:a copy -c:v libx264 -preset superfast -profile:v baseline'
+											. ' ' . escapeshellarg($textVideoPath) . ' 2>&1');
 									}
 									if ($cmdText) {
 										$pathFile = 'uploads/files/' . $d . '/' . $UploadedFileName . '.mp4';
@@ -15322,7 +15417,7 @@ if($type == 'p_sendTipMessage'){
             $requiresPayment = ($isVideoCallFree == 'no' && $userID != $calledUserID);
             if($requiresPayment){
                 $callerBalanceRow = $iN->iN_GetUserDetails($userID);
-                $currentPointsForCall = isset($callerBalanceRow['wallet_points']) ? (int)$callerBalanceRow['wallet_points'] : 0;
+                $currentPointsForCall = isset($callerBalanceRow['wallet_points']) ? (float)$callerBalanceRow['wallet_points'] : 0;
                 if($currentPointsForCall < $videoCallPrice){
                     exit('402'); // not enough balance
                 }

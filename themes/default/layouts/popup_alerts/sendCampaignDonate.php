@@ -51,7 +51,7 @@
                             <div class="donate_wallet_title"><?php echo iN_HelpSecure($LANG['wallet'] ?? 'Wallet'); ?></div>
                             <div class="donate_wallet_balance">
                                 <?php echo iN_HelpSecure($LANG['available_balance'] ?? 'Available balance'); ?>:
-                                <strong><?php echo iN_HelpSecure($walletPointsText . ' ' . ($LANG['points'] ?? 'Points')); ?></strong>
+                                <strong><?php echo iN_HelpSecure(formatCurrency($walletPointsText, $defaultCurrency)); ?></strong>
                             </div>
                         </div>
                     </div>

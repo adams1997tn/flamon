@@ -1,5 +1,3 @@
-<title>index.php</title>
-
 <?php
 if (!function_exists('dizzy_static_file_passthrough')) {
     /**

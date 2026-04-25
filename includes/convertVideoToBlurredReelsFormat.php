@@ -23,7 +23,24 @@ function convertVideoToBlurredReelsFormat(string $ffmpeg, string $inputPath, str
     $escapedInput = escapeshellarg($inputPath);
     $escapedOutput = escapeshellarg($outputPath);
 
-    $ffmpegCmd = escapeshellcmd($ffmpeg ?: 'ffmpeg');
+    // Validate ffmpeg binary — fall back to PATH if configured path is missing
+    $ffmpegBin = trim($ffmpeg ?? '');
+    if ($ffmpegBin !== '' && preg_match('~[\\\\/]~', $ffmpegBin) && !is_file($ffmpegBin)) {
+        $ffmpegBin = '';
+    }
+    if ($ffmpegBin === '') {
+        $isWindows = stripos(PHP_OS_FAMILY ?? PHP_OS, 'Windows') !== false;
+        if ($isWindows) {
+            $found = trim((string)@shell_exec('where.exe ffmpeg 2>NUL'));
+            if ($found !== '' && strpos($found, "\n") !== false) {
+                $found = trim(strtok($found, "\n"));
+            }
+        } else {
+            $found = trim((string)@shell_exec('command -v ffmpeg 2>/dev/null || which ffmpeg 2>/dev/null'));
+        }
+        $ffmpegBin = $found !== '' ? $found : 'ffmpeg';
+    }
+    $ffmpegCmd = escapeshellcmd($ffmpegBin);
 
     $cmd = "{$ffmpegCmd} -hide_banner -loglevel error -y -i {$escapedInput} "
          . "-filter_complex \"[0:v]scale=1080:-1[fg];"

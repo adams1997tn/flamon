@@ -334,9 +334,7 @@ if ($page === '' && isset($p_profileID)) {
                         <?php include __DIR__ . '/footer.php'; ?>
                     </div>
 
-                    <div class="footer_social_links_container flex_">
-                        <?php include __DIR__ . '/footerSocialLinks.php'; ?>
-                    </div>
+                  
                     <?php
                         $page = $pageBackup;
                         $pCat = $pCatBackup;

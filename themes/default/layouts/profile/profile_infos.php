@@ -12,15 +12,30 @@
                     <?php if($p_frame){ ?>
                         <div class="i_profile_gift_frame flex_ tabing"><img src="<?php echo $base_url.$p_frame;?>"></div>
                     <?php } ?>
-                    <div class="i_profile_avatar" data-avatar="<?php echo iN_HelpSecure($p_profileAvatar); ?>" role="img" aria-label="<?php echo iN_HelpSecure($LANG['profile_avatar_image_alt'] ?? 'Profile avatar image'); ?>">
+                    <div class="i_profile_avatar<?php echo ($p_profileID == $userID) ? ' js-profile-avatar-menu' : ''; ?>" data-avatar="<?php echo iN_HelpSecure($p_profileAvatar); ?>" role="img" aria-label="<?php echo iN_HelpSecure($LANG['profile_avatar_image_alt'] ?? 'Profile avatar image'); ?>"<?php if($p_profileID == $userID){ echo ' tabindex="0"'; } ?>>
                     <?php echo html_entity_decode($p_is_creator); ?>
                         <?php if($p_profileID == $userID){ ?>
                         <div class="frame_badge"><a class="flex_ tabing" href="<?php echo iN_HelpSecure($base_url).'settings?tab=myframes'?>"><?php echo html_entity_decode($iN->iN_SelectedMenuIcon('180'));?></a></div>
+                        <div class="i_profile_avatar_menu" role="menu" aria-hidden="true">
+                            <div class="i_profile_avatar_menu_item js-view-profile-photo" role="menuitem" tabindex="0">
+                                <span class="i_pavm_ic"><?php echo html_entity_decode($iN->iN_SelectedMenuIcon('68')); ?></span>
+                                <span><?php echo iN_HelpSecure($LANG['view_profile_photo'] ?? 'View profile photo'); ?></span>
+                            </div>
+                            <div class="i_profile_avatar_menu_item editAvatarCover" role="menuitem" tabindex="0">
+                                <span class="i_pavm_ic"><?php echo html_entity_decode($iN->iN_SelectedMenuIcon('27')); ?></span>
+                                <span><?php echo iN_HelpSecure($LANG['change_profile_photo'] ?? 'Change profile photo'); ?></span>
+                            </div>
+                        </div>
                     <?php } ?>
                     </div>
                   </div>
               </div>
           </div>
+
+          <style>   
+
+            
+          </style>
           <!--/PROFILE COVER AND AVATAR-->
           <!--USER PROFILE INFO-->
           <div class="i_u_profile_info">
@@ -52,15 +67,11 @@
                         <div class="i_btn_become_fun <?php echo iN_HelpSecure($subscBTN); ?> transition" data-u="<?php echo iN_HelpSecure($p_profileID); ?>">
                             <?php echo html_entity_decode($iN->iN_SelectedMenuIcon('51')) . $LANG['become_a_subscriber']; ?>
                         </div>
-                    <?php } else { if($p_subscription_type == 'point'){?>
+                    <?php } else { ?>
                         <div class="i_btn_unsubscribe transition unSubUP" data-u="<?php echo iN_HelpSecure($p_profileID); ?>">
                             <?php echo html_entity_decode($iN->iN_SelectedMenuIcon('51')) . $LANG['unsubscribe']; ?>
                         </div>
-                    <?php }else{?>
-                        <div class="i_btn_unsubscribe transition unSubU" data-u="<?php echo iN_HelpSecure($p_profileID); ?>">
-                            <?php echo html_entity_decode($iN->iN_SelectedMenuIcon('51')) . $LANG['unsubscribe']; ?>
-                        </div>
-                    <?php }}?>
+                    <?php }?>
                     <div class="i_btn_send_to_point transition sendPoint tabing flex_" data-u="<?php echo iN_HelpSecure($p_profileID); ?>">
                         <?php echo html_entity_decode($iN->iN_SelectedMenuIcon('145')) . $LANG['offer_a_tip']; ?>
                     </div>
@@ -204,3 +215,141 @@
        </div>
    </div>
 </div>
+
+<style>
+.i_profile_avatar.js-profile-avatar-menu { cursor: pointer; position: relative; }
+.i_profile_avatar_menu {
+    position: absolute;
+    top: calc(100% + 8px);
+    left: 50%;
+    transform: translateX(-50%);
+    min-width: 220px;
+    background: #ffffff;
+    border-radius: 10px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.18), 0 2px 6px rgba(0,0,0,0.08);
+    padding: 6px;
+    z-index: 50;
+    display: none;
+    font-family: system-ui, -apple-system, sans-serif;
+}
+.i_profile_avatar_menu.is-open { display: block; }
+.i_profile_avatar_menu_item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 12px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 14px;
+    color: #1f232d;
+    user-select: none;
+    transition: background 0.15s ease;
+}
+.i_profile_avatar_menu_item:hover,
+.i_profile_avatar_menu_item:focus { background: #f0f2f5; outline: none; }
+.i_profile_avatar_menu_item .i_pavm_ic svg { width: 18px; height: 18px; fill: #1f232d; display: block; }
+.body_dark .i_profile_avatar_menu,
+body.night .i_profile_avatar_menu { background: #242526; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+.body_dark .i_profile_avatar_menu_item,
+body.night .i_profile_avatar_menu_item { color: #e7e9ed; }
+.body_dark .i_profile_avatar_menu_item:hover,
+.body_dark .i_profile_avatar_menu_item:focus,
+body.night .i_profile_avatar_menu_item:hover,
+body.night .i_profile_avatar_menu_item:focus { background: #3a3b3c; }
+.body_dark .i_profile_avatar_menu_item .i_pavm_ic svg,
+body.night .i_profile_avatar_menu_item .i_pavm_ic svg { fill: #e7e9ed; }
+
+.i_profile_photo_viewer {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.85);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 99999;
+}
+.i_profile_photo_viewer img {
+    max-width: 92vw;
+    max-height: 92vh;
+    border-radius: 10px;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+}
+.i_profile_photo_viewer_close {
+    position: absolute;
+    top: 18px;
+    right: 22px;
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.12);
+    color: #ffffff;
+    font-size: 22px;
+    line-height: 38px;
+    text-align: center;
+    cursor: pointer;
+    user-select: none;
+}
+.i_profile_photo_viewer_close:hover { background: rgba(255,255,255,0.22); }
+</style>
+
+<script>
+(function(){
+    if (window.__profileAvatarMenuBound) { return; }
+    window.__profileAvatarMenuBound = true;
+
+    function closeMenu() {
+        document.querySelectorAll('.i_profile_avatar_menu.is-open').forEach(function(el){
+            el.classList.remove('is-open');
+            el.setAttribute('aria-hidden', 'true');
+        });
+    }
+
+    document.addEventListener('click', function(e){
+        var avatar = e.target.closest('.i_profile_avatar.js-profile-avatar-menu');
+        if (avatar) {
+            if (e.target.closest('.frame_badge') || e.target.closest('.i_profile_avatar_menu_item')) {
+                return;
+            }
+            e.stopPropagation();
+            var menu = avatar.querySelector('.i_profile_avatar_menu');
+            if (!menu) return;
+            var isOpen = menu.classList.contains('is-open');
+            closeMenu();
+            if (!isOpen) {
+                menu.classList.add('is-open');
+                menu.setAttribute('aria-hidden', 'false');
+            }
+            return;
+        }
+        if (!e.target.closest('.i_profile_avatar_menu')) {
+            closeMenu();
+        }
+    });
+
+    document.addEventListener('keydown', function(e){
+        if (e.key === 'Escape') { closeMenu(); }
+    });
+
+    document.addEventListener('click', function(e){
+        var viewBtn = e.target.closest('.js-view-profile-photo');
+        if (!viewBtn) return;
+        e.preventDefault();
+        e.stopPropagation();
+        closeMenu();
+        var avatarEl = viewBtn.closest('.i_profile_avatar');
+        if (!avatarEl) return;
+        var url = avatarEl.getAttribute('data-avatar') || '';
+        if (!url) return;
+        var viewer = document.createElement('div');
+        viewer.className = 'i_profile_photo_viewer';
+        viewer.innerHTML = '<div class="i_profile_photo_viewer_close" aria-label="Close">&times;</div><img alt="profile photo">';
+        viewer.querySelector('img').src = url;
+        viewer.addEventListener('click', function(ev){
+            if (ev.target === viewer || ev.target.classList.contains('i_profile_photo_viewer_close')) {
+                viewer.remove();
+            }
+        });
+        document.body.appendChild(viewer);
+    });
+})();
+</script>

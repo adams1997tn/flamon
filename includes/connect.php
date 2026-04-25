@@ -1,21 +1,8 @@
 <?php
-// +------------------------------------------------------------------------+
-// | @author Mustafa Öztürk (mstfoztrk)
-// | @author_url 1: http://www.duhovit.com
-// | @author_url 2: http://codecanyon.net/user/mstfoztrk
-// | @author_email: socialmaterial@hotmail.com
-// +------------------------------------------------------------------------+
-// | dizzy Support Creators Content Script
-// | Copyright (c) 2021 mstfoztrk. All rights reserved.
-// +------------------------------------------------------------------------+
-
-// --------------------------------------------------------------------------
-// ✅ DATABASE CONFIGURATION
-// --------------------------------------------------------------------------
-define('DB_SERVER', 'localhost');
-define('DB_USERNAME', 'YOUR_DB_USERNAME');
-define('DB_PASSWORD', 'YOUR_DB_PASSWORD');
-define('DB_DATABASE', 'YOUR_DB_DATABASE');
+define('DB_SERVER', '127.0.0.1');
+define('DB_USERNAME', 'root');
+define('DB_PASSWORD', '');
+define('DB_DATABASE', 'flamon');
 
 // Asset mode override for local performance testing:
 // "prod" enables .min asset preference, "dev" keeps source files.

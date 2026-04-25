@@ -72,6 +72,40 @@
                         </form>
                         <div class="success_tick tabing flex_ sec_one"><?php echo html_entity_decode($iN->iN_SelectedMenuIcon('69')); ?></div>
                     </div>
+                    <?php if (!empty($logo)) { ?>
+                        <div class="rec_not" style="margin-top:8px;">
+                            <img id="light_logo_preview" src="<?php echo iN_HelpSecure($base_url . $logo); ?>?v=<?php echo time(); ?>" alt="" style="max-height:48px;background:#fff;padding:6px;border-radius:6px;">
+                        </div>
+                    <?php } else { ?>
+                        <div class="rec_not" style="margin-top:8px;">
+                            <img id="light_logo_preview" src="" alt="" style="display:none;max-height:48px;background:#fff;padding:6px;border-radius:6px;">
+                        </div>
+                    <?php } ?>
+                    <div class="rec_not"><?php echo iN_HelpSecure($LANG['recommended_logo_sizes']); ?></div>
+                </div>
+            </div>
+
+            <div class="i_general_row_box_item flex_ tabing_non_justify" id="sec_logo_night">
+                <div class="irow_box_left tabing flex_"><?php echo iN_HelpSecure($LANG['site_logo_night'] ?? 'Site Logo (Night Mode)'); ?></div>
+                <div class="irow_box_right">
+                    <div class="certification_file_box">
+                        <form id="nlUploadForm" class="options-form" method="post" enctype="multipart/form-data" action="<?php echo iN_HelpSecure($base_url, FILTER_VALIDATE_URL); ?>admin/<?php echo iN_HelpSecure($adminTheme); ?>/request/request.php">
+                            <label for="id_night_logo">
+                                <?php echo html_entity_decode($iN->iN_SelectedMenuIcon('79')) . iN_HelpSecure($LANG['upload_night_logo'] ?? 'Upload Night Mode Logo'); ?>
+                                <input type="file" id="id_night_logo" name="uploading[]" data-id="nightLogoFile" data-type="sec_four" class="editAds_file">
+                            </label>
+                        </form>
+                        <div class="success_tick tabing flex_ sec_four"><?php echo html_entity_decode($iN->iN_SelectedMenuIcon('69')); ?></div>
+                    </div>
+                    <?php if (!empty($nightLogo)) { ?>
+                        <div class="rec_not" style="margin-top:8px;">
+                            <img id="night_logo_preview" src="<?php echo iN_HelpSecure($base_url . $nightLogo); ?>?v=<?php echo time(); ?>" alt="" style="max-height:48px;background:#111;padding:6px;border-radius:6px;">
+                        </div>
+                    <?php } else { ?>
+                        <div class="rec_not" style="margin-top:8px;">
+                            <img id="night_logo_preview" src="" alt="" style="display:none;max-height:48px;background:#111;padding:6px;border-radius:6px;">
+                        </div>
+                    <?php } ?>
                     <div class="rec_not"><?php echo iN_HelpSecure($LANG['recommended_logo_sizes']); ?></div>
                 </div>
             </div>
@@ -169,6 +203,7 @@
 
                 <div class="i_general_row_box_item flex_ tabing_non_justify">
                     <input type="hidden" name="logo" id="logo" value="<?php echo iN_HelpSecure($logo); ?>">
+                    <input type="hidden" name="night_logo" id="night_logo" value="<?php echo iN_HelpSecure($nightLogo ?? ''); ?>">
                     <input type="hidden" name="walogo" id="watlogo" value="<?php echo iN_HelpSecure($siteWatermarkLogo); ?>">
                     <input type="hidden" name="favicon" id="favicon" value="<?php echo iN_HelpSecure($favicon); ?>">
                     <input type="hidden" name="f" value="updateGeneral">

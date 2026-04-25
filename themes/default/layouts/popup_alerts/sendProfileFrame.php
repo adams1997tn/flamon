@@ -37,24 +37,18 @@
                                 <div class="plan_value">
                                     <div class="plan_price tabing">
                                         <div class="ib">
-                                            <?php echo number_format($framePrice); ?>
-                                            <span class="plan_point_icon">
-                                                <?php echo html_entity_decode($iN->iN_SelectedMenuIcon('40')); ?>
-                                            </span>
+                                            <?php echo formatCurrency($framePrice, $defaultCurrency); ?>
                                         </div>
                                     </div>
                                     <div class="plan_point tabing flex_">
-                                        <?php echo iN_HelpSecure($LANG['points']); ?>
+                                        <?php echo iN_HelpSecure($LANG['wallet_balance'] ?? 'Wallet Credit'); ?>
                                     </div>
 
                                     <!-- Purchase Button -->
                                     <div class="purchaseButton flex_ tabing" role="button" aria-label="<?php echo iN_HelpSecure($LANG['purchase']); ?>">
                                         <?php echo iN_HelpSecure($LANG['purchase']); ?>
                                         <strong class="tabing flex_ i_inline_flex">
-                                            <?php echo number_format($framePrice); ?>
-                                            <span class="prcsic">
-                                                <?php echo html_entity_decode($iN->iN_SelectedMenuIcon('40')); ?>
-                                            </span>
+                                            <?php echo formatCurrency($framePrice, $defaultCurrency); ?>
                                         </strong>
                                         <div class="foramount">
                                             <?php echo iN_HelpSecure($LANG['for']) . ' ' . iN_HelpSecure(formatCurrency($frameMoneyEqual, $defaultCurrency)); ?>

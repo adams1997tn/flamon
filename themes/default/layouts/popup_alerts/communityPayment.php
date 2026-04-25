@@ -460,7 +460,7 @@ $payConfigEncoded = base64_encode(json_encode($payConfig, JSON_UNESCAPED_SLASHES
                     <?php if ($userCurrentPoints >= $pointsAmount) { ?>
                         <div class="pay_form_group">
                             <button type="button" class="pay_subscription_point transition communityPointSubscribe" data-community="<?php echo (int) $communityID; ?>" data-scope="<?php echo iN_HelpSecure($communityPaymentScope); ?>">
-                                <?php echo iN_HelpSecure($LANG['pay']) . ' ' . iN_HelpSecure($pointsAmount) . html_entity_decode($iN->iN_SelectedMenuIcon('40')); ?>
+                                <?php echo iN_HelpSecure($LANG['pay']) . ' ' . iN_HelpSecure(formatCurrency($pointsAmount, $defaultCurrency)); ?>
                             </button>
                         </div>
                     <?php } else { ?>

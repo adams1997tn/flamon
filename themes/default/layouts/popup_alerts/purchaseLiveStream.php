@@ -18,8 +18,7 @@
                         <?php echo iN_HelpSecure($LANG['paying_point_for_live_streaming']); ?>
                     </div>
                     <div class="album-wanted-point">
-                        <div><?php echo html_entity_decode($liveCredit); ?></div>
-                        <span><?php echo iN_HelpSecure($LANG['points']); ?></span>
+                        <div><?php echo formatCurrency($liveCredit, $defaultCurrency); ?></div>
                     </div>
                 </div>
             </div>

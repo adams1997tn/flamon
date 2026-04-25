@@ -9,7 +9,8 @@ if (isset($pdo) && $pdo instanceof PDO) { DB::init($pdo); }
 
 $iN = new iN_UPDATES($db);
 $inc = $iN->iN_Configurations();
-$subscriptionType = isset($inc['subscription_type']) ? $inc['subscription_type'] : null;
+// Currency-only mode: subscription_type forced to '1' (gateway mode)
+$subscriptionType = '1';
 
 // Fetch active subscriptions renewing today
 $rows = DB::all("SELECT subscription_id, iuid_fk, subscribed_iuid_fk, plan_interval, SUM(user_net_earning) AS calculate

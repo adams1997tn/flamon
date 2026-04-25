@@ -22,16 +22,15 @@
 
                 <div class="p_p_wallet_cont">
                     <div class="h_product_title h_product_title_pop">
-                        <?php echo iN_HelpSecure($LANG['your_point_balance']); ?>
+                        <?php echo iN_HelpSecure($LANG['your_wallet_balance'] ?? $LANG['your_point_balance']); ?>
                     </div>
                     <div class="crnt_points crnt_points_pop">
-                        <?php echo number_format($userCurrentPoints); ?>
-                        <span>(<?php echo iN_HelpSecure(formatCurrency($onePointEqual * $userCurrentPoints, $defaultCurrency)); ?>)</span>
+                        <?php echo iN_HelpSecure(formatCurrency($userCurrentPoints, $defaultCurrency)); ?>
                     </div>
 
                     <?php
                     $prProductPrice = $prData['pr_price'];
-                    $currentAmount = $onePointEqual * $userCurrentPoints;
+                    $currentAmount = (float)$userCurrentPoints;
                     if ($currentAmount >= $prProductPrice) {
                         echo '<div class="wallet-info-ok">' . iN_HelpSecure($LANG['your_balance_is_enough_for_purchase']) . '</div>';
                     } else {

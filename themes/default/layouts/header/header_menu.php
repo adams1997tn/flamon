@@ -23,7 +23,7 @@
             <div class="arrow"></div>
            <?php }?>
             <div class="i_header_others_item transition">
-               <div class="i_header_item_icon_box"><?php echo html_entity_decode($iN->iN_SelectedMenuIcon('40'));?></div> <?php echo iN_HelpSecure($LANG['y_point_balance']); echo addCommasNoDot($userCurrentPoints);?>
+               <div class="i_header_item_icon_box"><?php echo html_entity_decode($iN->iN_SelectedMenuIcon('40'));?></div> <?php echo iN_HelpSecure($LANG['y_wallet_balance'] ?? $LANG['y_point_balance']); echo ' ' . iN_HelpSecure(formatCurrency($userCurrentPoints, $defaultCurrency));?>
             </div>
            <a href="<?php echo iN_HelpSecure($base_url);?>settings?tab=payments">
             <div class="i_header_others_item transition">

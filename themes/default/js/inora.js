@@ -5446,12 +5446,20 @@ $(document).ready(function () {
                 $("#setBankWarning").show();
                 return null;
             }
+        } else if (defaultMethod == 'bank') {
+            var btRoot = document.querySelector('[data-bt-form]');
+            if (btRoot && typeof btRoot.btValidate === 'function') {
+                if (!btRoot.btValidate()) { $("#setBankWarning").show(); return null; }
+                btRoot.btSerialize();
+                bankAccount = $.trim($("#bank_transfer").val() || '');
+            }
+            if (bankAccount.length == 0) { $("#setBankWarning").show(); return null; }
         } else if (bankAccount.length == 0) {
             $("#setBankWarning").show();
             return null;
         }
 
-        return {
+        var payload = {
             f: 'updatePayoutSet',
             paypalEmail: encodeURIComponent(paypalEmail),
             paypalReEmail: encodeURIComponent(repaypalEmail),
@@ -5467,6 +5475,26 @@ $(document).ready(function () {
             mercadoPagoAlias: mercadoPagoAlias,
             mercadoPagoCvu: mercadoPagoCvu
         };
+        if (defaultMethod == 'bank') {
+            var btRoot2 = document.querySelector('[data-bt-form]');
+            if (btRoot2 && typeof btRoot2.btSerialize === 'function') {
+                var bt = btRoot2.btSerialize();
+                payload.bank_country = bt.bank_country;
+                payload.iban_number = bt.iban_number;
+                payload.routing_number = bt.routing_number;
+                payload.account_number = bt.account_number;
+                payload.confirm_account_number = bt.confirm_account_number;
+                payload.account_holder_name = bt.account_holder_name;
+                payload.phone_country_code = bt.phone_country_code;
+                payload.phone_number = bt.phone_number;
+                payload.street_address = bt.street_address;
+                payload.country = bt.country;
+                payload.state = bt.state;
+                payload.city = bt.city;
+                payload.postal_code = bt.postal_code;
+            }
+        }
+        return payload;
     }
 
     togglePayoutMethodFields();

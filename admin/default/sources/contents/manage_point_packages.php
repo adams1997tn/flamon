@@ -34,22 +34,16 @@
                                 <div class="plan_value">
                                     <div class="plan_price tabing">
                                         <div class="positionRelative display_initial">
-                                            <?php echo number_format($planCreditAmount); ?>
-                                            <span class="plan_point_icon">
-                                                <?php echo html_entity_decode($iN->iN_SelectedMenuIcon('40')); ?>
-                                            </span>
+                                            <?php echo formatCurrency($planCreditAmount, $defaultCurrency); ?>
                                         </div>
                                     </div>
                                     <div class="plan_point tabing flex_">
-                                        <?php echo iN_HelpSecure($LANG['points']); ?>
+                                        <?php echo iN_HelpSecure($LANG['wallet_balance'] ?? 'Wallet Credit'); ?>
                                     </div>
                                     <div class="purchaseButton flex_ tabing">
                                         <?php echo iN_HelpSecure($LANG['purchase']); ?>
                                         <strong class="tabing flex_ inline_flexing">
-                                            <?php echo number_format($planCreditAmount); ?>
-                                            <span class="prcsic">
-                                                <?php echo html_entity_decode($iN->iN_SelectedMenuIcon('40')); ?>
-                                            </span>
+                                            <?php echo formatCurrency($planCreditAmount, $defaultCurrency); ?>
                                         </strong>
                                         <div class="foramount">
                                             <?php echo iN_HelpSecure($LANG['for']) . ' ' . $currencys[$defaultCurrency] . number_format($planAmount); ?>

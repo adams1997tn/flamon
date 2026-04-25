@@ -2,17 +2,15 @@
     <div class="i_header_in">
         <div class="i_logo tabing flex_">
             <a href="<?php echo iN_HelpSecure($base_url); ?>">
-                <img src="<?php echo iN_HelpSecure($siteLogoUrl); ?>">
+                <?php
+                    $__logoRenderUrl = $siteLogoUrl;
+                    if (isset($lightDark) && (string)$lightDark === 'dark' && !empty($nightLogo)) {
+                        $__logoRenderUrl = $base_url . $nightLogo;
+                    }
+                ?>
+                <img src="<?php echo iN_HelpSecure($__logoRenderUrl); ?>">
             </a>
-            <?php if ($page === 'moreposts' && $logedIn == 1) { ?>
-                <div class="mobile_hamburger tabing flex_">
-                    <div class="i_header_btn_item transition">
-                        <div class="i_h_in is_mobile">
-                            <?php echo html_entity_decode($iN->iN_SelectedMenuIcon('100')); ?>
-                        </div>
-                    </div>
-                </div>
-            <?php } ?>
+    
         </div>
 
         <div class="i_search relativePosition">
@@ -38,13 +36,19 @@
         </div>
 
         <div class="i_header_right">
-            <div class="i_one">
-                <div class="i_header_btn_item transition search_mobile mobile_srcbtn">
-                    <div class="i_h_in">
-                        <?php echo html_entity_decode($iN->iN_SelectedMenuIcon('101')); ?>
+
+
+            <?php if ($page === 'moreposts' && $logedIn == 1) { ?>
+                <div class="mobile_hamburger tabing flex_">
+                    <div class="i_header_btn_item transition">
+                        <div class="i_h_in is_mobile">
+                            <?php echo html_entity_decode($iN->iN_SelectedMenuIcon('100')); ?>
+                        </div>
                     </div>
                 </div>
-
+            <?php } ?>
+         
+ 
                 <?php if ($logedIn == 1) { ?>
                     <div class="i_header_btn_item topPoints transition"
                          data-label="<?php echo iN_HelpSecure($LANG['get_point_and_point_balance']); ?>"
@@ -55,16 +59,7 @@
                         </div>
                     </div>
 
-                    <?php if ($iN->iN_ShopStatus(1) === 'yes') { ?>
-                        <div class="i_header_btn_item transition shopi"
-                             data-label="<?php echo iN_HelpSecure($LANG['marketplace']); ?>">
-                            <a href="<?php echo iN_HelpSecure($base_url) . 'marketplace?cat=all'; ?>">
-                                <div class="i_h_in">
-                                    <?php echo html_entity_decode($iN->iN_SelectedMenuIcon('158')); ?>
-                                </div>
-                            </a>
-                        </div>
-                    <?php } ?>
+          
 
                     <div class="i_header_btn_item topMessages transition"
                          data-label="<?php echo iN_HelpSecure($LANG['messenger']); ?>"

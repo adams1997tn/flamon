@@ -33,7 +33,9 @@
                         <?php echo iN_HelpSecure($LANG['plan_point']); ?>
                     </div>
                     <div class="i_plnn_container flex_">
-                        <?php echo html_entity_decode($iN->iN_SelectedMenuIcon('40')); ?>
+                        <div class="i_amount_currency">
+                            <?php echo iN_HelpSecure($currencys[$defaultCurrency]); ?>
+                        </div>
                         <input type="text" name="planPoint" class="point_input white_board_padding_left" onkeypress="return event.charCode == 46 || (event.charCode >= 48 && event.charCode <= 57)" value="<?php echo iN_HelpSecure($planPoint); ?>">
                     </div>
 

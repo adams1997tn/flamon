@@ -329,33 +329,56 @@ $featureCards = [
         </section>
     </div>
 
-    <section class="features">
-        <div class="features-header">
-            <p class="eyebrow"><?php echo iN_HelpSecure(strip_tags($LANG['our_features_title']));?></p>
-            <h2><?php echo iN_HelpSecure($LANG['landing_title']);?></h2>
-            <p class="subtitle"><?php echo iN_HelpSecure($LANG['landing_two_features_subtitle']);?></p>
-        </div>
-        <div class="feature-panels">
-            <?php foreach ($featureCards as $panelIndex => $feature) {
-                $imagePath = !empty($feature['image']) ? $base_url . $feature['image'] : $themeAssetBase . '/img/landing_two_preview.png';
-                $active = $panelIndex === 2 ? ' active' : '';
-            ?>
-            <div class="feature-panel<?php echo $active; ?>">
-                <img src="<?php echo iN_HelpSecure($imagePath);?>" alt="<?php echo iN_HelpSecure(strip_tags($feature['title']));?>">
-                <div class="shadow"></div>
-                <div class="feature-label">
-                    <div class="feature-icon" aria-hidden="true">
-                        <?php echo html_entity_decode($iN->iN_SelectedMenuIcon('51'));?>
+ 
+
+
+
+
+
+
+  <section class="earnings-sim">
+        <div class="earnings-sim__inner">
+            <div class="earnings-sim__head">
+                <p class="earnings-sim__eyebrow"><?php echo iN_HelpSecure($LANG['creators_earning_simulator']);?></p>
+                <h2><?php echo strip_tags($LANG['per_month_calculate_earn']);?></h2>
+                <p><?php echo iN_HelpSecure($LANG['calculate_how_much_can_earn']);?></p>
+            </div>
+            <div class="earnings-sim__controls">
+                <div class="earnings-sim__control">
+                    <label for="rangeNumberFollowers">
+                        <?php echo iN_HelpSecure($LANG['l_number_of_followers']);?> <span aria-hidden="true">👥</span>
+                    </label>
+                    <div class="earnings-sim__value" data-follower-value><span id="numberFollowers"><?php echo number_format(1000);?></span></div>
+                    <input id="rangeNumberFollowers" type="range" min="1000" max="1000000" step="1000" value="1000">
+                </div>
+                <div class="earnings-sim__control">
+                    <label for="rangeMonthlySubscription">
+                        <?php echo iN_HelpSecure($LANG['l_monthly_subscription_price']);?> <span aria-hidden="true">💸</span>
+                    </label>
+                    <div class="earnings-sim__value">
+                        <span data-price-value id="monthlySubscription"><?php echo iN_HelpSecure(formatCurrency(2, $defaultCurrency));?></span>
                     </div>
-                    <div class="info">
-                        <div class="main"><?php echo iN_HelpSecure(strip_tags($feature['title']));?></div>
-                        <div class="sub"><?php echo html_entity_decode($feature['desc']);?></div>
-                    </div>
+                    <input id="rangeMonthlySubscription" type="range" min="2" max="100" step="1" value="2">
                 </div>
             </div>
-            <?php } ?>
+            <div class="earnings-sim__result">
+                <p><?php echo iN_HelpSecure($LANG['calculate_how_much_can_earn']);?></p>
+                <div class="earnings-sim__amount" data-estimate-value><span id="estimatedEarn"><?php echo iN_HelpSecure(formatCurrency(95, $defaultCurrency));?></span></div>
+                <p class="earnings-sim__hint"><?php echo iN_HelpSecure($LANG['not_for_calculate']);?></p>
+            </div>
         </div>
     </section>
+
+
+
+
+
+
+
+
+
+
+
 
     <section class="movement-blurb">
         <div class="movement-blurb__title"><?php echo iN_HelpSecure($LANG['landing_two_spotlight_label']);?></div>
@@ -434,39 +457,7 @@ $featureCards = [
         <?php } ?>
     </section>
 
-    <section class="earnings-sim">
-        <div class="earnings-sim__inner">
-            <div class="earnings-sim__head">
-                <p class="earnings-sim__eyebrow"><?php echo iN_HelpSecure($LANG['creators_earning_simulator']);?></p>
-                <h2><?php echo strip_tags($LANG['per_month_calculate_earn']);?></h2>
-                <p><?php echo iN_HelpSecure($LANG['calculate_how_much_can_earn']);?></p>
-            </div>
-            <div class="earnings-sim__controls">
-                <div class="earnings-sim__control">
-                    <label for="rangeNumberFollowers">
-                        <?php echo iN_HelpSecure($LANG['l_number_of_followers']);?> <span aria-hidden="true">👥</span>
-                    </label>
-                    <div class="earnings-sim__value" data-follower-value><span id="numberFollowers"><?php echo number_format(1000);?></span></div>
-                    <input id="rangeNumberFollowers" type="range" min="1000" max="1000000" step="1000" value="1000">
-                </div>
-                <div class="earnings-sim__control">
-                    <label for="rangeMonthlySubscription">
-                        <?php echo iN_HelpSecure($LANG['l_monthly_subscription_price']);?> <span aria-hidden="true">💸</span>
-                    </label>
-                    <div class="earnings-sim__value">
-                        <span data-price-value id="monthlySubscription"><?php echo iN_HelpSecure(formatCurrency(2, $defaultCurrency));?></span>
-                    </div>
-                    <input id="rangeMonthlySubscription" type="range" min="2" max="100" step="1" value="2">
-                </div>
-            </div>
-            <div class="earnings-sim__result">
-                <p><?php echo iN_HelpSecure($LANG['calculate_how_much_can_earn']);?></p>
-                <div class="earnings-sim__amount" data-estimate-value><span id="estimatedEarn"><?php echo iN_HelpSecure(formatCurrency(95, $defaultCurrency));?></span></div>
-                <p class="earnings-sim__hint"><?php echo iN_HelpSecure($LANG['not_for_calculate']);?></p>
-            </div>
-        </div>
-    </section>
-
+  
     <section class="faq" aria-labelledby="faq-title">
         <div class="faq__container">
             <div class="faq__content">

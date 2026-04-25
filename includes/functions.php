@@ -805,6 +805,7 @@ class iN_UPDATES {
 				'watermark_position' => 'watermark_position',
 				'watermark_opacity' => 'watermark_opacity',
 				'watermark_size' => 'watermark_size',
+				'site_night_logo' => 'site_night_logo',
 	            'web_push_status' => 'web_push_status',
 	            'web_push_vapid_public' => 'web_push_vapid_public',
 	            'web_push_vapid_private' => 'web_push_vapid_private',
@@ -922,6 +923,7 @@ class iN_UPDATES {
 				'watermark_position' => ['column' => 'watermark_position', 'type' => 'string'],
 				'watermark_opacity' => ['column' => 'watermark_opacity', 'type' => 'int'],
 				'watermark_size' => ['column' => 'watermark_size', 'type' => 'int'],
+				'site_night_logo' => ['column' => 'site_night_logo', 'type' => 'string'],
 	            'web_push_status' => ['column' => 'web_push_status', 'type' => 'bool'],
 	            'web_push_vapid_public' => ['column' => 'web_push_vapid_public', 'type' => 'string'],
 	            'web_push_vapid_private' => ['column' => 'web_push_vapid_private', 'type' => 'string'],
@@ -6706,6 +6708,38 @@ public function iN_CheckPlanExist($planID, $userID) {
         $ensured = true;
     }
 
+    /**
+     * Ensure structured bank-transfer payout columns exist on i_users.
+     * Idempotent; runs once per request. Columns are nullable varchar so they
+     * remain safe for existing rows and PHP 8.1/8.2 null handling.
+     */
+    private function iN_EnsureBankPayoutColumns(): void
+    {
+        static $ensured = false;
+        if ($ensured) { return; }
+        $columns = array(
+            'bank_country'           => "varchar(4) NULL DEFAULT NULL",
+            'iban_number'            => "varchar(42) NULL DEFAULT NULL",
+            'routing_number'         => "varchar(40) NULL DEFAULT NULL",
+            'account_number'         => "varchar(64) NULL DEFAULT NULL",
+            'account_holder_name'    => "varchar(190) NULL DEFAULT NULL",
+            'phone_country_code'     => "varchar(8) NULL DEFAULT NULL",
+            'phone_number'           => "varchar(32) NULL DEFAULT NULL",
+            'street_address'         => "varchar(255) NULL DEFAULT NULL",
+            'bank_address_country'   => "varchar(4) NULL DEFAULT NULL",
+            'bank_address_state'     => "varchar(120) NULL DEFAULT NULL",
+            'bank_address_city'      => "varchar(120) NULL DEFAULT NULL",
+            'postal_code'            => "varchar(24) NULL DEFAULT NULL",
+        );
+        foreach ($columns as $col => $ddl) {
+            $row = DB::one("SHOW COLUMNS FROM i_users LIKE ?", [$col]);
+            if (!$row) {
+                DB::exec("ALTER TABLE i_users ADD " . $col . " " . $ddl);
+            }
+        }
+        $ensured = true;
+    }
+
     private function iN_ResetStripePlanCache($userID, $planType): void
     {
         $this->iN_EnsureStripeSubscriptionColumns();
@@ -8436,9 +8470,13 @@ public function iN_InsertNewVerificationRequest($userID, $cardIDPhoto, $Photo) {
         }
 	}
 	/*Accept Conditions Button by Clicking Next button*/
-public function iN_AcceptConditions($userID) {
+public function iN_AcceptConditions($userID, $instagramUrl = '', $tiktokUrl = '') {
 		if ($this->iN_CheckUserExist($userID) == 1) {
-            DB::exec("UPDATE i_users SET certification_status = '2', validation_status = '1' WHERE iuid = ?", [(int)$userID]);
+            DB::exec("UPDATE i_users SET certification_status = '2', condition_status = '2', instagram_url = ?, tiktok_url = ? WHERE iuid = ?", [
+                $instagramUrl !== '' ? (string)$instagramUrl : null,
+                $tiktokUrl !== '' ? (string)$tiktokUrl : null,
+                (int)$userID
+            ]);
             return true;
         }
 	}
@@ -8481,17 +8519,17 @@ public function iN_AcceptConditions($userID) {
 	/*Update Fee Status From Users Table*/
 	public function iN_UpdateUserFeeStatus($userID) {
 			if ($this->iN_CheckUserExist($userID) == 1) {
-	            DB::exec("UPDATE i_users SET validation_status = '2', condition_status = '2', fees_status = '2' WHERE iuid = ?", [(int)$userID]);
+	            DB::exec("UPDATE i_users SET fees_status = '2' WHERE iuid = ?", [(int)$userID]);
 	            return true;
 	        }
 		}
 		/*Insert Payout Settings*/
 	public function iN_SetPayout($userID, $paypalEmail, $bankAccount, $defaultMethod, array $payoutMethodData = array()) {
 			if ($this->iN_CheckUserExist($userID) == 1) {
+				$this->iN_EnsureBankPayoutColumns();
 				$updateFields = array(
 					'payout_method' => (string)$defaultMethod,
-					'payout_status' => '2',
-					'user_verified_status' => '1'
+					'payout_status' => '2'
 				);
 				if ((string)$defaultMethod === 'paypal') {
 					$updateFields['paypal_email'] = (string)$paypalEmail;
@@ -8506,7 +8544,19 @@ public function iN_AcceptConditions($userID) {
 					'western_union_document_id' => 'western_union_document_id',
 					'bitcoin_wallet_address' => 'bitcoin_wallet_address',
 					'mercadopago_alias' => 'mercadopago_alias',
-					'mercadopago_cvu' => 'mercadopago_cvu'
+					'mercadopago_cvu' => 'mercadopago_cvu',
+					'bank_country' => 'bank_country',
+					'iban_number' => 'iban_number',
+					'routing_number' => 'routing_number',
+					'account_number' => 'account_number',
+					'account_holder_name' => 'account_holder_name',
+					'phone_country_code' => 'phone_country_code',
+					'phone_number' => 'phone_number',
+					'street_address' => 'street_address',
+					'country' => 'bank_address_country',
+					'state' => 'bank_address_state',
+					'city' => 'bank_address_city',
+					'postal_code' => 'postal_code'
 				);
 				foreach ($methodDetailColumnMap as $dataKey => $columnName) {
 					if (!array_key_exists($dataKey, $payoutMethodData)) {
@@ -8525,6 +8575,8 @@ public function iN_AcceptConditions($userID) {
 				}
 				$params[] = (int)$userID;
 	            DB::exec("UPDATE i_users SET " . implode(', ', $setParts) . " WHERE iuid = ?", $params);
+	            // Auto-submit for admin verification after payout setup
+	            DB::exec("UPDATE i_users SET validation_status = '1' WHERE iuid = ? AND validation_status = '0'", [(int)$userID]);
 	            return true;
 	        } else {
 	            return false;
@@ -8712,6 +8764,7 @@ public function iN_UserTotalSubscribtions($userID) {
 		/*Insert Payout Settings*/
 	public function iN_UpdatePayout($userID, $paypalEmail, $bankAccount, $defaultMethod, array $payoutMethodData = array()) {
 			if ($this->iN_CheckUserExist($userID) == 1) {
+				$this->iN_EnsureBankPayoutColumns();
 				$updateFields = array(
 					'payout_method' => (string)$defaultMethod
 				);
@@ -8728,7 +8781,19 @@ public function iN_UserTotalSubscribtions($userID) {
 					'western_union_document_id' => 'western_union_document_id',
 					'bitcoin_wallet_address' => 'bitcoin_wallet_address',
 					'mercadopago_alias' => 'mercadopago_alias',
-					'mercadopago_cvu' => 'mercadopago_cvu'
+					'mercadopago_cvu' => 'mercadopago_cvu',
+					'bank_country' => 'bank_country',
+					'iban_number' => 'iban_number',
+					'routing_number' => 'routing_number',
+					'account_number' => 'account_number',
+					'account_holder_name' => 'account_holder_name',
+					'phone_country_code' => 'phone_country_code',
+					'phone_number' => 'phone_number',
+					'street_address' => 'street_address',
+					'country' => 'bank_address_country',
+					'state' => 'bank_address_state',
+					'city' => 'bank_address_city',
+					'postal_code' => 'postal_code'
 				);
 				foreach ($methodDetailColumnMap as $dataKey => $columnName) {
 					if (!array_key_exists($dataKey, $payoutMethodData)) {
@@ -8893,7 +8958,7 @@ public function iN_BuyPost($userID, $userPostOwnerID, $PurchasePostID, $amount, 
                         [(int)$userID, (int)$userPostOwnerID, $agencyId, (int)$PurchasePostID, $time, (string)$amount, (string)$fee, (string)$agencyFee, (string)$adminEarning, (string)$agencyEarning, (string)$userEarning]
                 );
             $paymentId = (int) DB::lastId();
-			DB::exec("UPDATE i_users SET wallet_points = wallet_points - ? WHERE iuid = ?", [(int)$credit, (int)$userID]);
+			DB::exec("UPDATE i_users SET wallet_points = wallet_points - ? WHERE iuid = ?", [(string)$credit, (int)$userID]);
 			DB::exec("UPDATE i_users SET wallet_money = wallet_money + ? WHERE iuid = ?", [(string)$userEarning, (int)$userPostOwnerID]);
             if ($paymentId > 0) {
                 $currency = $GLOBALS['defaultCurrency'] ?? 'USD';
@@ -9688,7 +9753,8 @@ public function iN_LatestContentPaymentsList() {
         $updateSiteName,
         $watermarkPosition = 'bottom_right',
         $watermarkOpacity = 78,
-        $watermarkSize = 19
+        $watermarkSize = 19,
+        $updateSiteNightLogo = ''
     ) {
 	        if ($this->iN_CheckIsAdmin($userID) == 1) {
 	            DB::exec(
@@ -9711,6 +9777,7 @@ public function iN_LatestContentPaymentsList() {
                 $this->iN_SetSetting('watermark_position', (string)$watermarkPosition);
                 $this->iN_SetSetting('watermark_opacity', (string)$watermarkOpacity);
                 $this->iN_SetSetting('watermark_size', (string)$watermarkSize);
+                $this->iN_SetSetting('site_night_logo', (string)$updateSiteNightLogo);
 	            return true;
 	        } else { return false; }
 	}
@@ -12368,7 +12435,7 @@ public function iN_UpdateUserProfile($userID, $updatedUser, $updateVerification,
                 DB::begin();
                 try {
                     DB::exec("UPDATE i_verification_requests SET request_status = '1', request_not = ? WHERE request_id = ?", [(string)$answerValue,(int)$answeringVerificationID]);
-                    DB::exec("UPDATE i_users SET certification_status = '1', validation_status = '1' WHERE iuid = ?", [$iuIDfk]);
+                    DB::exec("UPDATE i_users SET validation_status = '2', user_verified_status = '1' WHERE iuid = ?", [$iuIDfk]);
                     DB::commit();
                     return true;
                 } catch (Throwable $e) { DB::rollBack(); return false; }
@@ -12376,7 +12443,7 @@ public function iN_UpdateUserProfile($userID, $updatedUser, $updateVerification,
                 DB::begin();
                 try {
                     DB::exec("UPDATE i_verification_requests SET request_status = '2', request_not = ? WHERE request_id = ?", [(string)$answerValue,(int)$answeringVerificationID]);
-                    DB::exec("UPDATE i_users SET certification_status = '0', validation_status = '0', condition_status = '0', fees_status = '0', payout_status = '0', payout_method = NULL, paypal_email = NULL, bank_account = NULL WHERE iuid = ?", [$iuIDfk]);
+                    DB::exec("UPDATE i_users SET certification_status = '0', validation_status = '0', condition_status = '0' WHERE iuid = ?", [$iuIDfk]);
                     DB::commit();
                     return true;
                 } catch (Throwable $e) { DB::rollBack(); return false; }
@@ -13926,7 +13993,7 @@ public function iN_BuyLiveStreaming($userID, $userLiveStreamOwnerID, $purchasdLi
                       [(int)$userID, (int)$userLiveStreamOwnerID, $agencyId, (int)$purchasdLiveStreamID, $time, (string)$amount, (string)$fee, (string)$agencyFee, (string)$adminEarning, (string)$agencyEarning, (string)$userEarning]
             );
             $paymentId = (int) DB::lastId();
-            DB::exec("UPDATE i_users SET wallet_points = wallet_points - ? WHERE iuid = ?", [(int)$credit, (int)$userID]);
+            DB::exec("UPDATE i_users SET wallet_points = wallet_points - ? WHERE iuid = ?", [(string)$credit, (int)$userID]);
             DB::exec("UPDATE i_users SET wallet_money = wallet_money + ? WHERE iuid = ?", [(string)$userEarning, (int)$userLiveStreamOwnerID]);
             if ($paymentId > 0) {
                 $currency = $GLOBALS['defaultCurrency'] ?? 'USD';
@@ -18522,7 +18589,7 @@ public function iN_InsertStorieSeen($userID, $storieID) {
                 $agencyFee = $split['agency_fee'];
                 $agencyEarning = $split['agency_earning'];
                 DB::begin();
-                DB::exec("UPDATE i_users SET wallet_points = wallet_points - ? WHERE iuid = ?", [(int)$tipAmount, (int)$userID]);
+                DB::exec("UPDATE i_users SET wallet_points = wallet_points - ? WHERE iuid = ?", [(string)$tipAmount, (int)$userID]);
                 DB::exec("UPDATE i_users SET wallet_money = wallet_money + ? WHERE iuid = ?", [(string)$userNetEarning, (int)$tiSendingUserID]);
                 DB::exec("INSERT INTO i_user_payments (payer_iuid_fk, payed_iuid_fk, agency_id_fk, payment_type, payment_time, payment_status, amount, user_earning, admin_earning, agency_earning, fee, agency_fee) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)",
                     [(int)$userID, (int)$tiSendingUserID, $agencyId, 'videoCall', $time, 'ok', (string)$netUserEarning, (string)$userNetEarning, (string)$adminEarning, (string)$agencyEarning, (string)$adminFee, (string)$agencyFee]
@@ -18535,11 +18602,11 @@ public function iN_InsertStorieSeen($userID, $storieID) {
                 return true;
             } catch (Throwable $e) {
                 DB::rollBack();
-                // Fallback: credit receiver points instead of money if wallet_money is not available
+                // Fallback: credit receiver wallet instead of money if wallet_money is not available
                 try {
                     DB::begin();
-                    DB::exec("UPDATE i_users SET wallet_points = wallet_points - ? WHERE iuid = ?", [(int)$tipAmount, (int)$userID]);
-                    DB::exec("UPDATE i_users SET wallet_points = wallet_points + ? WHERE iuid = ?", [(int)$tipAmount, (int)$tiSendingUserID]);
+                    DB::exec("UPDATE i_users SET wallet_points = wallet_points - ? WHERE iuid = ?", [(string)$tipAmount, (int)$userID]);
+                    DB::exec("UPDATE i_users SET wallet_points = wallet_points + ? WHERE iuid = ?", [(string)$tipAmount, (int)$tiSendingUserID]);
                     DB::exec("INSERT INTO i_user_payments (payer_iuid_fk, payed_iuid_fk, agency_id_fk, payment_type, payment_time, payment_status, amount, user_earning, admin_earning, agency_earning, fee, agency_fee) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)",
                         [(int)$userID, (int)$tiSendingUserID, $agencyId, 'videoCall', $time, 'ok', (string)$netUserEarning, (string)$userNetEarning, (string)$adminEarning, (string)$agencyEarning, (string)$adminFee, (string)$agencyFee]
                     );
@@ -18604,7 +18671,7 @@ public function iN_InsertStorieSeen($userID, $storieID) {
             try {
                 DB::begin();
                 DB::exec("UPDATE i_user_point_earnings SET calculated_point = '1' WHERE poninted_user_id = ?", [(int)$userID]);
-                DB::exec("UPDATE i_users SET wallet_points = wallet_points + ? WHERE iuid = ?", [(int)$totalPointEarned, (int)$userID]);
+                DB::exec("UPDATE i_users SET wallet_points = wallet_points + ? WHERE iuid = ?", [(string)$totalPointEarned, (int)$userID]);
                 DB::commit();
                 return true;
             } catch (Throwable $e) { DB::rollBack(); return false; }
@@ -20788,7 +20855,7 @@ public function iN_BoostPlans() {
 	                    [(int)$userID, (int)$boostPostID, $time, (string)$planAmount]
 	                );
                     $paymentId = (int) DB::lastId();
-	                DB::exec("UPDATE i_users SET wallet_points = wallet_points - ? WHERE iuid = ?", [(int)$planAmount, (int)$userID]);
+	                DB::exec("UPDATE i_users SET wallet_points = wallet_points - ? WHERE iuid = ?", [(string)$planAmount, (int)$userID]);
 	                if ($boostID) {
 	                    DB::exec("UPDATE i_posts SET boosted_status = '1', boost_id_fk = ? WHERE post_id = ? AND post_owner_id = ?", [(int)$boostID, (int)$boostPostID, (int)$userID]);
 	                }
@@ -22478,7 +22545,7 @@ public function iN_TransactionsListPoints($userID, $paginationLimit, $page) {
             try {
                 DB::begin();
                 DB::exec("UPDATE i_users SET user_frame = ? WHERE iuid = ?", [(string)$frameImagePath, (int)$purchasedID]);
-                DB::exec("UPDATE i_users SET wallet_points = wallet_points - ? WHERE iuid = ?", [(int)$framePrice, (int)$userID]);
+                DB::exec("UPDATE i_users SET wallet_points = wallet_points - ? WHERE iuid = ?", [(string)$framePrice, (int)$userID]);
                 if ($this->iN_CheckFramePurchased($userID, $frameID) == 1) {
                     DB::exec("UPDATE i_user_frames SET f_total_purchased_this_frame = f_total_purchased_this_frame + 1 WHERE f_purchased_frame_id = ?", [(int)$frameID]);
                 } else {
@@ -22880,10 +22947,10 @@ public function iN_TransactionsListPoints($userID, $paginationLimit, $page) {
     public function iN_AiUsed($userID, $credit){
         if ($this->iN_CheckUserExist($userID) == '1') {
             $row = DB::one("SELECT wallet_points FROM i_users WHERE iuid = ?", [(int)$userID]);
-            $wallet = $row ? (int)$row['wallet_points'] : 0;
-            $credit = (int)$credit;
+            $wallet = $row ? (float)$row['wallet_points'] : 0;
+            $credit = (float)$credit;
             if ($wallet >= $credit) {
-                DB::exec("UPDATE i_users SET wallet_points = wallet_points - ? WHERE iuid = ?", [$credit, (int)$userID]);
+                DB::exec("UPDATE i_users SET wallet_points = wallet_points - ? WHERE iuid = ?", [(string)$credit, (int)$userID]);
                 return true;
             }
         }

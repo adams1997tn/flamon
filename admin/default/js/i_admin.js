@@ -1765,6 +1765,10 @@
                 if (response && response !== "undefined,") {
                     if (type === 'sec_one') {
                         $("#logo").val(response);
+                        var lp = $("#light_logo_preview");
+                        if (lp.length) {
+                            lp.attr("src", siteurl.replace(/admin\/[^/]+\/?$/, '') + response + "?v=" + Date.now()).show();
+                        }
                     } else {
                         $("#favicon").val(response);
                     }
@@ -1775,6 +1779,42 @@
         });
      
         $("#lUploadForm").trigger("submit");
+    });
+    /*Upload Night Mode Logo*/
+    $(document).on("change", "#id_night_logo", function(e) {
+        e.preventDefault();
+
+        var id = $(this).attr("data-id");
+        var type = $(this).attr("data-type");
+        var data = { f: id, c: type };
+
+        $("#nlUploadForm").ajaxForm({
+            type: "POST",
+            data: data,
+            delegation: true,
+            cache: false,
+            beforeSubmit: function() {
+                $("#night_logo").val('');
+                $("#sec_logo_night").append(uploadLoading);
+                $("." + type).hide();
+            },
+            uploadProgress: function(e, position, total, percentageComplete) {
+                $('.i_upload_progress').width(percentageComplete + '%');
+            },
+            success: function(response) {
+                if (response && response !== "undefined,") {
+                    $("#night_logo").val(response);
+                    $("." + type).show();
+                    var preview = $("#night_logo_preview");
+                    if (preview.length) {
+                        preview.attr("src", siteurl.replace(/admin\/[^/]+\/?$/, '') + response + "?v=" + Date.now()).show();
+                    }
+                }
+                $(".i_upload_progress").remove();
+            }
+        });
+
+        $("#nlUploadForm").trigger("submit");
     });
     /*Upload Verification Files*/
     $(document).on("change", "#id_fav", function(e) {

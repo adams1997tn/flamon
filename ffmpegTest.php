@@ -71,22 +71,80 @@
         }
 
         if (function_exists('shell_exec')) {
-            // Try multiple portable ways to locate binaries
-            $ffmpeg = trim(shell_exec('command -v ffmpeg 2>/dev/null || type -P ffmpeg 2>/dev/null || which ffmpeg 2>/dev/null'));
-            $ffprobe = trim(shell_exec('command -v ffprobe 2>/dev/null || type -P ffprobe 2>/dev/null || which ffprobe 2>/dev/null'));
-            // Windows fallback
-            if (stripos(PHP_OS_FAMILY, 'Windows') !== false) {
-                if (!$ffmpeg) { $ffmpeg = trim(shell_exec('where ffmpeg')); }
-                if (!$ffprobe) { $ffprobe = trim(shell_exec('where ffprobe')); }
+            $isWindows = stripos(PHP_OS_FAMILY ?? PHP_OS, 'Windows') !== false;
+
+            // --- Sanitize admin-configured paths (PHP 8.1+ safe) ---
+            $configuredFfmpeg  = isset($ffmpegPath)  ? trim((string)$ffmpegPath)  : '';
+            $configuredFfprobe = isset($ffprobePath)  ? trim((string)$ffprobePath) : '';
+
+            // Show configured path for debugging
+            if ($configuredFfmpeg !== '') {
+                echo "<div class='fftester-msg fftester-info'>Configured ffmpeg_path (Admin &gt; Settings): <strong>" . htmlspecialchars($configuredFfmpeg) . "</strong></div>";
+                // Warn if it looks like a macOS/Linux path on Windows
+                if ($isWindows && (strpos($configuredFfmpeg, '/opt/') === 0 || strpos($configuredFfmpeg, '/usr/') === 0)) {
+                    echo "<div class='fftester-msg fftester-warning'>&#9888; The configured path looks like a macOS/Linux path. On Windows, use something like: <code>C:\\ffmpeg\\bin\\ffmpeg.exe</code></div>";
+                }
             }
 
-            // Show configured path if any
-            if (!empty($ffmpegPath)) {
-                echo "<div class='fftester-msg fftester-info'>Configured ffmpeg_path (Admin > Settings): <strong>" . htmlspecialchars($ffmpegPath) . "</strong></div>";
+            // --- Step 1: Try the admin-configured path first ---
+            $ffmpeg  = '';
+            $ffprobe = '';
+
+            if ($configuredFfmpeg !== '' && is_file($configuredFfmpeg)) {
+                $ffmpeg = $configuredFfmpeg;
+            }
+            if ($configuredFfprobe !== '' && is_file($configuredFfprobe)) {
+                $ffprobe = $configuredFfprobe;
             }
 
-            if (empty($ffmpeg)) {
-                echo "<div class='fftester-msg fftester-warning'>FFMPEG not found in PATH.</div>";
+            // --- Step 2: If configured path is a directory, look for binaries inside it ---
+            if ($ffmpeg === '' && $configuredFfmpeg !== '' && is_dir($configuredFfmpeg)) {
+                $suffix = $isWindows ? '.exe' : '';
+                $candidate = rtrim($configuredFfmpeg, '/\\') . DIRECTORY_SEPARATOR . 'ffmpeg' . $suffix;
+                if (is_file($candidate)) { $ffmpeg = $candidate; }
+            }
+
+            // --- Step 3: OS-native PATH lookup ---
+            if ($ffmpeg === '') {
+                if ($isWindows) {
+                    $ffmpeg = trim((string)@shell_exec('where ffmpeg 2>NUL'));
+                } else {
+                    $ffmpeg = trim((string)@shell_exec('command -v ffmpeg 2>/dev/null || which ffmpeg 2>/dev/null'));
+                }
+                // 'where' on Windows can return multiple lines; take the first
+                if ($ffmpeg !== '' && strpos($ffmpeg, "\n") !== false) {
+                    $ffmpeg = trim(strtok($ffmpeg, "\n"));
+                }
+            }
+            if ($ffprobe === '') {
+                if ($isWindows) {
+                    $ffprobe = trim((string)@shell_exec('where ffprobe 2>NUL'));
+                } else {
+                    $ffprobe = trim((string)@shell_exec('command -v ffprobe 2>/dev/null || which ffprobe 2>/dev/null'));
+                }
+                if ($ffprobe !== '' && strpos($ffprobe, "\n") !== false) {
+                    $ffprobe = trim(strtok($ffprobe, "\n"));
+                }
+            }
+
+            // --- Step 4: Derive ffprobe from ffmpeg path if still missing ---
+            if ($ffprobe === '' && $ffmpeg !== '') {
+                if ($isWindows) {
+                    $derivedProbe = str_replace('ffmpeg.exe', 'ffprobe.exe', $ffmpeg);
+                } else {
+                    $derivedProbe = preg_replace('/ffmpeg$/', 'ffprobe', $ffmpeg);
+                }
+                if ($derivedProbe !== $ffmpeg && is_file($derivedProbe)) {
+                    $ffprobe = $derivedProbe;
+                }
+            }
+
+            // --- Display results: FFMPEG ---
+            if ($ffmpeg === '') {
+                echo "<div class='fftester-msg fftester-warning'>FFMPEG not found in PATH or configured path.</div>";
+                if ($isWindows) {
+                    echo "<div class='fftester-msg fftester-note'>Install FFmpeg to <code>C:\\ffmpeg\\bin\\</code> and add <code>C:\\ffmpeg\\bin</code> to your system PATH, then restart Laragon.</div>";
+                }
                 $error++;
             } else {
                 echo "<div class='fftester-msg fftester-success'>FFMPEG found at: <strong>" . htmlspecialchars($ffmpeg) . "</strong></div>";
@@ -97,11 +155,12 @@
                 }
             }
 
+            // --- Display results: FFPROBE ---
             echo "<h2 class='fftester-subtitle'>FFPROBE</h2>";
             echo "<h4 class='fftester-note'>FFprobe is required for reading video metadata (duration, codecs, etc.).</h4>";
-            if (empty($ffprobe)) {
-                echo "<div class='fftester-msg fftester-warning'>FFPROBE not found in PATH.</div>";
-                echo "<div class='fftester-msg fftester-note'>If ffprobe is installed but not in PATH, add its full path in your server configuration.</div>";
+            if ($ffprobe === '') {
+                echo "<div class='fftester-msg fftester-warning'>FFPROBE not found in PATH or configured path.</div>";
+                echo "<div class='fftester-msg fftester-note'>FFprobe ships with FFmpeg. If you installed FFmpeg, ffprobe should be in the same <code>bin</code> folder.</div>";
                 $error++;
             } else {
                 echo "<div class='fftester-msg fftester-success'>FFPROBE found at: <strong>" . htmlspecialchars($ffprobe) . "</strong></div>";

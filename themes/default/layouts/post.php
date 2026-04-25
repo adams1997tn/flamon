@@ -127,9 +127,9 @@
 	            $oStatus = time() - $onlineWindowSeconds;
 
 	            if ((int) $userPostOwnerUserLastLogin > $oStatus) {
-	                $timeStatus = '<div class="userIsOnline flex_ tabing">' . $LANG['online'] . '</div>';
+	                $timeStatus = '<div class="userIsOnline flex_ tabing"></div>';
 	            } else {
-	                $timeStatus = '<div class="userIsOffline flex_ tabing">' . $LANG['offline'] . '</div>';
+	                $timeStatus = '<div class="userIsOffline flex_ tabing"></div>';
 	            }
 
             $userProfileStatus = $postFromData['profile_status'] ?? null;

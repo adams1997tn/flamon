@@ -82,11 +82,8 @@ if (isset($_GET["page-id"])) {
                     <div class="tab_detail_item item_mobile"><?php echo iN_HelpSecure($myDateTimeEnd);?></div>
                     <div class="tab_detail_item item_mobile">
                         <?php
-                        if($paymentMethod == 'stripe'){
-                            echo iN_HelpSecure(formatCurrency($payedAmount, $payedCurrency));
-                        }else{
-                            echo round($payedAmount,2).'<span class="table_span">'.$LANG['points'].'</span>';
-                        }?>
+                        echo iN_HelpSecure(formatCurrency($payedAmount, $payedCurrency));
+                        ?>
                     </div>
                     <div class="tab_detail_item item_mobile"><?php echo iN_HelpSecure(formatCurrency((float)$adminEarning, $payedCurrency));?></div>
                     <div class="tab_detail_item item_mobile"><?php echo iN_HelpSecure(formatCurrency((float)$agencyEarning, $payedCurrency));?></div>

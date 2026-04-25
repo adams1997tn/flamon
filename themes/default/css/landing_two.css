@@ -47,23 +47,24 @@ img {
 }
 
 .logo {
-  width: 48px;
-  height: 48px;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-weight: 700;
-  font-size: 1.4rem;
-  color: #fff;
+    width: 103px;
+    height: 51px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 1.4rem;
+    color: #fff;
+    z-index: 999999999;
 }
 
 .logo img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  border-radius: 50%;
-  display: block;
+    width: 134%;
+    height: 59%;
+    object-fit: cover;
+    border-radius: 50%;
+    display: block;
 }
 
 .header-center {
@@ -821,10 +822,10 @@ img {
 }
 
 .cp-gallery-intro {
-  text-align: center;
-  padding: 0 20px 20px;
-  max-width: 700px;
-  margin: 0 auto;
+    text-align: center;
+    padding: 0 20px 20px;
+    max-width: 700px;
+    margin: 0 auto;
 }
 
 .cp-gallery-intro h2 {
@@ -844,6 +845,7 @@ img {
   -ms-overflow-style: none;
   scrollbar-width: none;
   cursor: grab;
+  justify-items: anchor-center;
 }
 
 .cp-gallery-row::-webkit-scrollbar {

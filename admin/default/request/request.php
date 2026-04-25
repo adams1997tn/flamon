@@ -932,7 +932,7 @@ if (!function_exists('iN_admin_openai_health_check')) {
             }
             exit;
         }
-	if ($type == 'logoFile' || $type == 'faviconFile') {
+	if ($type == 'logoFile' || $type == 'faviconFile' || $type == 'nightLogoFile') {
 		//$availableFileExtensions
 		if (isset($_POST) and $_SERVER['REQUEST_METHOD'] == "POST") {
 				$theValidateType = $iN->iN_Secure($_POST['c']);
@@ -986,6 +986,14 @@ if (!function_exists('iN_admin_openai_health_check')) {
 										$pathFile = $targetPublicPath . $getFilename;
 										$UploadSourceUrl = $base_url . $targetPublicPath . $getFilename;
 									}
+									/* Auto-persist logo/favicon on successful upload so the admin does not need to click Save separately */
+									if ($type == 'nightLogoFile') {
+										$iN->iN_SetSetting('site_night_logo', $targetPublicPath . $getFilename);
+									} else if ($type == 'logoFile') {
+										try { DB::exec("UPDATE i_configurations SET site_logo = ? WHERE configuration_id = 1", [$targetPublicPath . $getFilename]); } catch (Throwable $e) {}
+									} else if ($type == 'faviconFile') {
+										try { DB::exec("UPDATE i_configurations SET site_favicon = ? WHERE configuration_id = 1", [$targetPublicPath . $getFilename]); } catch (Throwable $e) {}
+									}
 									echo $targetPublicPath . $getFilename;
 								} else {
 									echo iN_HelpSecure($LANG['upload_failed']);
@@ -1001,6 +1009,7 @@ if (!function_exists('iN_admin_openai_health_check')) {
 		/*Update Site General Settings*/
 		if ($type == 'updateGeneral') {
 				$updateSiteLogo = $iN->iN_Secure($_POST['logo']);
+				$updateSiteNightLogo = isset($_POST['night_logo']) ? $iN->iN_Secure($_POST['night_logo']) : '';
 				$updateSiteFavicon = $iN->iN_Secure($_POST['favicon']);
 				$updateWAtermark = $iN->iN_Secure($_POST['walogo']);
 				$updateSiteKeywords = $iN->iN_Secure($_POST['site_keywords']);
@@ -1041,7 +1050,8 @@ if (!function_exists('iN_admin_openai_health_check')) {
                     $iN->iN_Secure($updateSiteName),
                     $iN->iN_Secure($watermarkPosition),
                     $iN->iN_Secure((string)$watermarkOpacity),
-                    $iN->iN_Secure((string)$watermarkSize)
+                    $iN->iN_Secure((string)$watermarkSize),
+                    $iN->iN_Secure($updateSiteNightLogo)
                 );
 			if ($updateSiteConfirugarion) {
 				exit('200');
@@ -1564,11 +1574,14 @@ if (!function_exists('iN_admin_openai_health_check')) {
         $subjectIsMailto = false;
         if (stripos($webPushVapidSubject, 'mailto:') === 0) {
             $mailTarget = trim((string)substr($webPushVapidSubject, 7));
-            $subjectIsMailto = $mailTarget !== '' && filter_var($mailTarget, FILTER_VALIDATE_EMAIL) !== false;
+            $subjectIsMailto = $mailTarget !== ''
+                && (filter_var($mailTarget, FILTER_VALIDATE_EMAIL) !== false
+                    || preg_match('/^[a-zA-Z0-9._%+\-]+@localhost$/i', $mailTarget));
         }
         $subjectIsHttps = (stripos($webPushVapidSubject, 'https://') === 0)
             && filter_var($webPushVapidSubject, FILTER_VALIDATE_URL) !== false;
-        if (!$subjectIsMailto && !$subjectIsHttps) {
+        $subjectIsHttp = (stripos($webPushVapidSubject, 'http://localhost') === 0);
+        if (!$subjectIsMailto && !$subjectIsHttps && !$subjectIsHttp) {
             exit('webpush_subject_invalid');
         }
         $webPushTtl = isset($_POST['web_push_ttl']) ? (int)$iN->iN_Secure($_POST['web_push_ttl']) : (int)$iN->iN_GetSetting('web_push_ttl', 60);

@@ -56,8 +56,7 @@
                     <?php } ?>
 
                     <div class="album-wanted-point">
-                        <div><?php echo html_entity_decode($userPostWantedCredit); ?></div>
-                        <span><?php echo iN_HelpSecure($LANG['points']); ?></span>
+                        <div><?php echo formatCurrency($userPostWantedCredit, $defaultCurrency); ?></div>
                     </div>
                 </div>
             </div>

@@ -26,7 +26,24 @@ function convertToMp4Format(
         : ($sourcePath === $outputPath);
     // When input and output are the same path, write to a temp then rename.
     $targetPath = $samePath ? (rtrim($outputDir, '/') . '/' . $filenameWithoutExt . '__tmp__.mp4') : $outputPath;
-    $ffmpegBin = $ffmpegPath ?: 'ffmpeg';
+
+    // Validate ffmpeg binary — fall back to PATH if configured path is missing
+    $ffmpegBin = trim($ffmpegPath ?? '');
+    if ($ffmpegBin !== '' && preg_match('~[\\\\/]~', $ffmpegBin) && !is_file($ffmpegBin)) {
+        $ffmpegBin = '';
+    }
+    if ($ffmpegBin === '') {
+        $isWindows = stripos(PHP_OS_FAMILY ?? PHP_OS, 'Windows') !== false;
+        if ($isWindows) {
+            $found = trim((string)@shell_exec('where.exe ffmpeg 2>NUL'));
+            if ($found !== '' && strpos($found, "\n") !== false) {
+                $found = trim(strtok($found, "\n"));
+            }
+        } else {
+            $found = trim((string)@shell_exec('command -v ffmpeg 2>/dev/null || which ffmpeg 2>/dev/null'));
+        }
+        $ffmpegBin = $found !== '' ? $found : 'ffmpeg';
+    }
     $ffmpegCmd = escapeshellcmd($ffmpegBin);
 
     $remuxCandidates = ['mp4', 'm4v', 'mov'];

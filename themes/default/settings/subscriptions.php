@@ -83,11 +83,7 @@ if ($payedActiveSubscriptions) {
             <div class="tab_detail_item item_mobile"><?php echo $myDateTime;?></div>
             <div class="tab_detail_item item_mobile"><?php echo $myDateTimeLast;?></div>
             <div class="tab_detail_item item_mobile">
-               <?php if($paymentMethod == 'point'){?>
-                  <div class="i_sub_box_unm_interval"><?php echo iN_HelpSecure($LANG[$planInterval]).': '.round($payedAmount,2).$LANG['points'];?></div>
-               <?php }else{?>
                   <div class="i_sub_box_unm_interval"><?php echo iN_HelpSecure($LANG[$planInterval]) . ': ' . iN_HelpSecure(formatCurrency($payedAmount, $defaultCurrency));?></div>
-               <?php } ?>
             </div>
             <div class="tab_detail_item item_mobile"><div class="i_sub_flw"><div class="i_follow flex_ tabing i_fw<?php echo iN_HelpSecure($payedSubscribedUidFk); ?> <?php echo html_entity_decode($flwrBtn); ?> transition <?php echo iN_HelpSecure($subButnClass);?> " id="i_btn_like_item" data-u="<?php echo iN_HelpSecure($payedSubscribedUidFk); ?>"><?php echo html_entity_decode($flwBtnIconText); ?></div></div></div>
       </div>

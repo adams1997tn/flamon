@@ -67,25 +67,15 @@
 	            $subscriptionGatewayDisabledSummary = !empty($subscriptionGatewayDisabledLabels)
 	                ? implode(' / ', $subscriptionGatewayDisabledLabels)
 	                : '-';
-	            $communityPlanFeeDisplay = $selectedSubscriptionType === '2'
-	                ? ((string)$minPointFeeMonthly . ' ' . ($LANG['points'] ?? ''))
-	                : formatCurrency($subscribeMonthlyMinimumAmount, $defaultCurrency);
+	            $communityPlanFeeDisplay = formatCurrency($subscribeMonthlyMinimumAmount, $defaultCurrency);
 	            ?>
             
 	            <div class="i_general_row_box_item flex_ tabing_non_justify">
 	               <div class="irow_box_left tabing flex_"><?php echo iN_HelpSecure($LANG['choose_subs_system']);?></div>
                <div class="irow_box_right">
                    <div class="i_box_limit flex_ column">
-                       <div class="i_limit" data-type="pl_limit"><span class="pslmt"><?php echo iN_HelpSecure($selectedSubscriptionLabel); ?></span><?php echo html_entity_decode($iN->iN_SelectedMenuIcon('36'));?></div>
-                        <div class="i_point_sub_list_container">
-                            <div class="i_countries_list border_one column flex_">
-
-                            <div class="i_s_limit transition border_one gsearch <?php echo $selectedSubscriptionType === '1' ? 'choosed' : ''; ?>" id='1' data-c="<?php echo iN_HelpSecure($gatewayModeLabel); ?>" data-type="ps_limit"><?php echo iN_HelpSecure($gatewayModeLabel); ?></div>
-                            <div class="i_s_limit transition border_one gsearch <?php echo $selectedSubscriptionType === '2' ? 'choosed' : ''; ?>" id='2' data-c="<?php echo iN_HelpSecure($pointsModeLabel); ?>" data-type="ps_limit"><?php echo iN_HelpSecure($pointsModeLabel); ?></div>
-
-                            </div>
-                            <input type="hidden" name="choose_sub_type" id="pSLimit" value="<?php echo iN_HelpSecure($selectedSubscriptionType);?>">
-                        </div>
+                       <div class="i_limit"><span class="pslmt"><?php echo iN_HelpSecure($gatewayModeLabel); ?> (Locked)</span></div>
+                            <input type="hidden" name="choose_sub_type" id="pSLimit" value="1">
                         <div class="rec_not box_not_padding_top"><?php echo iN_HelpSecure($LANG['enabled']);?>: <?php echo iN_HelpSecure($subscriptionGatewayEnabledSummary);?></div>
                         <div class="rec_not box_not_padding_top"><?php echo iN_HelpSecure($LANG['disabled']);?>: <?php echo iN_HelpSecure($subscriptionGatewayDisabledSummary);?></div>
                         <div class="rec_not box_not_padding_top"><?php echo iN_HelpSecure($LANG['suggestion_choose']);?></div>
@@ -224,7 +214,8 @@
             <div class="i_general_row_box_item flex_ tabing_non_justify">
                <div class="irow_box_left tabing flex_"><?php echo iN_HelpSecure($LANG['how_much_one_point']);?></div>
                <div class="irow_box_right">
-                 <input type="number" name="point_to_dolar" min="0.001" step="0.001" class="i_input flex_" value="<?php echo iN_HelpSecure($onePointEqual);?>">
+                 <input type="number" name="point_to_dolar" min="1" step="1" class="i_input flex_" value="1" readonly>
+                 <div class="rec_not box_not_padding_top">Locked to 1 — currency mode is active.</div>
                </div>
             </div>
              
