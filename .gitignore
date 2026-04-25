@@ -20,3 +20,11 @@ rad.json
 *.flf
 #Test results file
 TestResults.xml
+# Local
+uploads/
+tmp/
+img/dayimages/
+includes/logs/
+*.log
+.user.ini
+
