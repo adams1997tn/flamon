@@ -56,6 +56,7 @@ $btLang = [
     'select_country'           => $LANG['bt_select_country']           ?? 'Select a country',
 ];
 ?>
+<style>.bt-form .bt-req{display:none !important;}</style>
 <div class="bt-form" data-bt-form>
   <input type="hidden" name="bank" id="bank_transfer" value="<?php echo iN_HelpSecure($bankAccount ?? ''); ?>">
 
@@ -96,7 +97,7 @@ $btLang = [
 
       <div class="bt-field bt-span-2">
         <label class="bt-label" for="bt_confirm_account_number"><?php echo iN_HelpSecure($btLang['confirm_account_number']); ?><span class="bt-req">*</span></label>
-        <input type="text" id="bt_confirm_account_number" name="confirm_account_number" class="bt-input" autocomplete="off" maxlength="40" value="<?php echo iN_HelpSecure($btValues['account_number']); ?>" onpaste="return false" ondrop="return false">
+        <input type="text" id="bt_confirm_account_number" name="confirm_account_number" class="bt-input" autocomplete="off" maxlength="40" value="<?php echo iN_HelpSecure($btValues['account_number']); ?>">
         <div class="bt-err" data-err-for="confirm_account_number"></div>
       </div>
 

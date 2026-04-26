@@ -6732,7 +6732,9 @@ public function iN_CheckPlanExist($planID, $userID) {
             'postal_code'            => "varchar(24) NULL DEFAULT NULL",
         );
         foreach ($columns as $col => $ddl) {
-            $row = DB::one("SHOW COLUMNS FROM i_users LIKE ?", [$col]);
+            // Column name is a hardcoded identifier; sanity-check before inlining.
+            if (!preg_match('/^[a-zA-Z0-9_]+$/', $col)) { continue; }
+            $row = DB::one("SHOW COLUMNS FROM i_users LIKE '" . $col . "'");
             if (!$row) {
                 DB::exec("ALTER TABLE i_users ADD " . $col . " " . $ddl);
             }

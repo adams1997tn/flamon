@@ -8624,6 +8624,13 @@ if ($type == 'upload') {
 			}
 		}
 	}
+		/*Skip Payout Step*/
+		if ($type == 'payoutSkip') {
+			DB::exec("UPDATE i_users SET payout_status = '2' WHERE iuid = ?", [(int)$userID]);
+			DB::exec("UPDATE i_users SET validation_status = '1' WHERE iuid = ? AND validation_status = '0'", [(int)$userID]);
+			echo '200';
+			exit();
+		}
 		/*Save Payout Details*/
 		if ($type == 'payoutSet') {
 			if (isset($_POST['method']) && in_array($_POST['method'], $defaultPayoutMethods, true)) {
@@ -8704,11 +8711,7 @@ if ($type == 'upload') {
 					$payoutMethodData['mercadopago_alias'] = $mercadoPagoAlias;
 					$payoutMethodData['mercadopago_cvu'] = $mercadoPagoCvu;
 				} else {
-					if (trim((string)$bankAccount) === '') {
-						echo 'bank_warning';
-						exit();
-					}
-					// Premium structured bank transfer fields
+					// Bank transfer fields are optional. Allow saving with empty/partial data.
 					$bankCountry       = trim((string)($_POST['bank_country'] ?? ''));
 					$ibanNumber        = strtoupper(preg_replace('/\s+/', '', (string)($_POST['iban_number'] ?? '')));
 					$routingNumber     = trim((string)($_POST['routing_number'] ?? ''));
@@ -8722,13 +8725,8 @@ if ($type == 'upload') {
 					$btState           = trim((string)($_POST['state'] ?? ''));
 					$btCity            = trim((string)($_POST['city'] ?? ''));
 					$btPostal          = trim((string)($_POST['postal_code'] ?? ''));
-					if ($bankCountry === '' || $accountNumber === '' || $accountHolderName === ''
-						|| $phoneCountryCode === '' || $phoneNumber === '' || $streetAddress === ''
-						|| $btCountry === '' || $btState === '' || $btCity === '' || $btPostal === '') {
-						echo 'bank_warning';
-						exit();
-					}
-					if ($accountNumber !== $confirmAccount) {
+					// Only enforce confirm-match if user actually entered an account number.
+					if ($accountNumber !== '' && $accountNumber !== $confirmAccount) {
 						echo 'bank_warning';
 						exit();
 					}

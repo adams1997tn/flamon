@@ -319,44 +319,15 @@
     // Expose validation + serialization API
     root.btValidate = function () {
       var ok = true;
-      var required = [
-        ['bank_country', bankCountryEl],
-        ['country', countryEl],
-        ['account_number', acc],
-        ['confirm_account_number', confirmAcc],
-        ['account_holder_name', root.querySelector('#bt_account_holder_name')],
-        ['phone_number', root.querySelector('#bt_phone_number')],
-        ['street_address', root.querySelector('#bt_street_address')],
-        ['state', root.querySelector('#bt_state')],
-        ['city', root.querySelector('#bt_city')],
-        ['postal_code', root.querySelector('#bt_postal_code')]
-      ];
-      for (var i = 0; i < required.length; i++) {
-        var el = required[i][1]; if (!el) continue;
-        var val = '';
-        if (el.tagName === 'DIV') {
-          var hid = el.querySelector('input[type="hidden"]'); val = hid ? hid.value : '';
-        } else {
-          val = (el.value || '').trim();
-        }
-        if (!val) {
-          toggleErr(el.tagName === 'DIV' ? el : el, true, (window.BT_I18N || {}).required || 'Required');
-          ok = false;
-        }
-      }
+      // Bank fields are optional. Only validate format when user actually filled something.
       if (iban && iban.value.trim() && !ibanIsValid(iban.value)) {
         toggleErr(iban, true, (window.BT_I18N || {}).ibanInvalid || 'Invalid IBAN');
         ok = false;
       }
-      if (!checkMatch()) ok = false;
-      // Phone dial selected
-      if (phoneEl) {
-        var hid = phoneEl.querySelector('input[type="hidden"]');
-        if (!hid || !hid.value) {
-          toggleErr(root.querySelector('#bt_phone_number'), true, (window.BT_I18N || {}).required || 'Required');
-          ok = false;
-        }
-      }
+      // Only enforce confirm-match if either account number field has a value.
+      var accVal = acc ? (acc.value || '').trim() : '';
+      var confVal = confirmAcc ? (confirmAcc.value || '').trim() : '';
+      if ((accVal !== '' || confVal !== '') && !checkMatch()) ok = false;
       return ok;
     };
 

@@ -1,0 +1,353 @@
+/* =============================================================
+   Dizzy – Responsive & Foldable Safety Layer
+   -------------------------------------------------------------
+   Loaded last (after all theme stylesheets) so it can override
+   legacy desktop rules ONLY when the viewport is narrow,
+   square-ish, or sits in the "foldable gap" (769–1100 px).
+
+   Targets verified against:
+     • Galaxy Z Fold 4 inner  ~884 × 1812 CSS  (aspect ≈ 0.49 portrait, 2.05 landscape)
+     • Galaxy Z Fold cover    ~373 × 819 CSS
+     • Surface Duo            540 × 720 / split 720 × 1024
+     • iPad Mini portrait     744 × 1133
+     • iPhone 14/15 family    390–430 × 844–932
+
+   Strategy:
+     1. Universal box-sizing + min-width:0 (kills overflow inside flex/grid).
+     2. Global page x-overflow guard + safe-area insets.
+     3. Fluid media (img/video/iframe).
+     4. Foldable-gap query: 769–1100 px width treated as mobile-ish.
+     5. Square-aspect query: 0.8–1.25 ratio AND ≤1100px width.
+     6. Specific known offenders (fixed-width sidebars, footer rows).
+   ============================================================= */
+
+/* ---------- 1. Universal safety ---------- */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+/* `min-width: 0` lets flex/grid children shrink instead of overflow.
+   Scope to common layout primitives so we do not regress legacy widgets
+   that assume content-box sizing. */
+.i_become_creator_box,
+.certification_form_container,
+.i_subscription_form_container,
+.i_set_subscription_fee_box,
+.bt-form,
+.bt-grid,
+.bt-field,
+.payout_method_fields,
+.i_become_creator_box_footer,
+.bt-phone,
+.i_set_subscription_fee {
+  min-width: 0;
+}
+
+/* ---------- 2. Page-level guards + safe-area ---------- */
+:root {
+  --safe-top:    env(safe-area-inset-top,    0px);
+  --safe-right:  env(safe-area-inset-right,  0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+  --safe-left:   env(safe-area-inset-left,   0px);
+}
+
+html, body {
+  max-width: 100vw;
+  overflow-x: hidden;
+}
+
+body {
+  /* Don't let notch / hinge area eat content on devices that honor
+     viewport-fit=cover. Only adds insets when the OS reports them. */
+  padding-left:  var(--safe-left);
+  padding-right: var(--safe-right);
+}
+
+/* ---------- 3. Fluid media ---------- */
+img, video, iframe, canvas, svg {
+  max-width: 100%;
+  height: auto;
+}
+
+/* ---------- 4. The "foldable gap": 769 – 1100 px ----------
+   Most legacy rules assume <=768 = mobile, >768 = desktop.
+   Z Fold 4 inner unfolded reports ~884 px → falls into desktop and
+   breaks. Re-route this band into mobile-friendly behavior. */
+@media (min-width: 769px) and (max-width: 1100px) {
+
+  /* Become-creator wizard – constrain & center, never wider than viewport. */
+  .i_become_creator_box,
+  .certification_form_container,
+  .i_subscription_form_container {
+    width: 100% !important;
+    max-width: min(100%, 720px) !important;
+    margin-left: auto;
+    margin-right: auto;
+    padding-left:  clamp(12px, 3vw, 24px);
+    padding-right: clamp(12px, 3vw, 24px);
+  }
+
+  /* Bank-transfer 2-col grid → 1 col when there isn't enough width. */
+  .bt-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 14px;
+  }
+  .bt-field.bt-span-2 {
+    grid-column: 1 / -1;
+  }
+
+  /* Footer action row stays right-aligned but wraps cleanly. */
+  .i_become_creator_box_footer {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    gap: 10px;
+  }
+  .i_become_creator_box_footer .pyot_footer_actions {
+    width: 100%;
+    justify-content: flex-end;
+  }
+
+  /* Generic feed/card containers – let auto-fit grids re-tile. */
+  .i_users_grid,
+  .i_post_videos_grid,
+  .i_search_users_box,
+  .ip_grid,
+  .grid_users {
+    display: grid !important;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 220px), 1fr));
+    gap: clamp(8px, 2vw, 16px);
+  }
+}
+
+/* ---------- 5. Square-ish aspect (folded inner / split-view) ---------- */
+@media (max-width: 1100px) and (min-aspect-ratio: 4/5) and (max-aspect-ratio: 5/4) {
+  /* Lower hero/banner heights so they don't dominate near-square screens. */
+  .i_landing_top,
+  .i_become_creator_top,
+  .creator_conguratulation {
+    min-height: 0 !important;
+    height: auto !important;
+  }
+  /* Force any element using vh-based sizing to relax. */
+  [style*="height:100vh"],
+  [style*="height: 100vh"] {
+    height: auto !important;
+    min-height: 60vh;
+  }
+}
+
+/* ---------- 6. Truly narrow (Fold cover, small phones) ---------- */
+@media (max-width: 420px) {
+  .bt-grid { gap: 10px; }
+  .bt-field .bt-input,
+  .bt-field .bt-picker-btn { font-size: 14px; }
+  .i_become_creator_box_footer .i_nex_btn {
+    padding: 10px 22px;
+    font-size: 14px;
+  }
+  .i_become_creator_box_footer .pyot_footer_actions {
+    width: 100%;
+    justify-content: stretch;
+  }
+  .i_become_creator_box_footer .pyot_footer_actions .i_nex_btn {
+    flex: 1 1 0;
+    text-align: center;
+  }
+}
+
+/* ---------- 7. Touch-target & wrapping safety on every viewport ---------- */
+button, .i_nex_btn, .pyot_Skip, .pyot_Next {
+  min-height: 40px;
+}
+
+.bt-input,
+.bt-picker-btn {
+  width: 100%;
+}
+
+/* Long words/URLs should not push the layout sideways. */
+.i_post_message,
+.i_user_message,
+.i_user_full_name,
+.bt-section-title {
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+/* =============================================================
+   Reusable responsive table — applies AUTOMATICALLY on mobile to:
+     • Any container with class .i_tab_container (legacy div table
+       used across /settings: payments, subscriptions, agencies,
+       blocked, subscribers, purchased_points, etc.)
+     • Any <table> or container marked .i_responsive_table.
+   On <=768px:
+     • Header row hides
+     • Each row becomes a stacked card
+     • Each cell shows its column title via [data-label] (auto
+       populated from the header by responsive-tables.js) on the
+       left, value on the right.
+   ============================================================= */
+.i_responsive_table { width: 100%; }
+
+/* Native <table> support */
+.i_responsive_table table {
+  width: 100%;
+  border-collapse: collapse;
+}
+.i_responsive_table th,
+.i_responsive_table td {
+  padding: 10px 12px;
+  text-align: left;
+  vertical-align: middle;
+}
+
+@media (max-width: 768px) {
+  /* ---- Native <table> stacked cards ---- */
+  .i_responsive_table table,
+  .i_responsive_table thead,
+  .i_responsive_table tbody,
+  .i_responsive_table tr,
+  .i_responsive_table th,
+  .i_responsive_table td { display: block; width: 100%; }
+
+  .i_responsive_table thead {
+    position: absolute;
+    width: 1px; height: 1px;
+    padding: 0; margin: -1px; overflow: hidden;
+    clip: rect(0,0,0,0); white-space: nowrap; border: 0;
+  }
+  .i_responsive_table tr {
+    margin: 0 0 12px;
+    padding: 12px 14px;
+    border-radius: 12px;
+    background: var(--rt-card-bg, rgba(127,127,127,0.06));
+    box-shadow: 0 1px 2px rgba(0,0,0,0.06);
+  }
+  .i_responsive_table td {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+    padding: 8px 0;
+    border: 0;
+    border-bottom: 1px dashed rgba(127,127,127,0.18);
+    min-height: 40px;            /* touch-friendly */
+    font-size: 0.95rem;
+    line-height: 1.35;
+  }
+  .i_responsive_table td:last-child { border-bottom: 0; }
+  .i_responsive_table td::before {
+    content: attr(data-label);
+    flex: 0 0 42%;
+    max-width: 42%;
+    font-weight: 600;
+    color: var(--rt-label-color, inherit);
+    opacity: 0.75;
+    overflow-wrap: anywhere;
+  }
+  .i_responsive_table td > * { min-width: 0; }
+
+  /* ---- Legacy div-based settings tables ---- */
+  /* Hide the header strip — applies to ALL .i_tab_container, not just opt-in. */
+  .i_tab_container .i_tab_header,
+  .i_responsive_table .i_tab_header { display: none !important; }
+
+  /* Each row -> card */
+  .i_tab_container .i_tab_list_item.flex_,
+  .i_tab_container .i_tab_list_item,
+  .i_responsive_table .i_tab_list_item.flex_,
+  .i_responsive_table .i_tab_list_item {
+    display: block !important;
+    width: 100%;
+    margin: 0 0 12px;
+    padding: 12px 14px;
+    border-radius: 12px;
+    background: var(--rt-card-bg, rgba(127,127,127,0.06));
+    box-shadow: 0 1px 2px rgba(0,0,0,0.06);
+  }
+
+  /* Each cell -> stacked label/value row */
+  .i_tab_container .i_tab_list_item .tab_detail_item,
+  .i_tab_container .i_tab_list_item .tab_detail_item.item_mobile,
+  .i_responsive_table .i_tab_list_item .tab_detail_item,
+  .i_responsive_table .i_tab_list_item .tab_detail_item.item_mobile {
+    display: flex !important;          /* override any "display:none" from item_mobile */
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 0;
+    padding: 8px 0;
+    border: 0;
+    border-bottom: 1px dashed rgba(127,127,127,0.18);
+    min-height: 40px;
+    font-size: 0.95rem;
+    line-height: 1.35;
+    text-align: right;
+  }
+  .i_tab_container .i_tab_list_item .tab_detail_item:last-child,
+  .i_responsive_table .i_tab_list_item .tab_detail_item:last-child {
+    border-bottom: 0;
+  }
+  .i_tab_container .i_tab_list_item .tab_detail_item[data-label]::before,
+  .i_responsive_table .i_tab_list_item .tab_detail_item[data-label]::before {
+    content: attr(data-label);
+    flex: 0 0 42%;
+    max-width: 42%;
+    font-weight: 600;
+    opacity: 0.75;
+    text-align: left;
+    overflow-wrap: anywhere;
+  }
+  /* Allow wrapping inside narrow cell content (e.g., long usernames). */
+  .i_tab_container .i_tab_list_item .tab_detail_item.truncated,
+  .i_responsive_table .i_tab_list_item .tab_detail_item.truncated {
+    text-overflow: clip;
+    overflow: visible;
+    white-space: normal;
+  }
+  /* The avatar+name flex inside a "Paid By" cell: keep avatar inline with name. */
+  .i_tab_container .tabing_non_justify.flex_,
+  .i_responsive_table .tabing_non_justify.flex_ {
+    justify-content: flex-end;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+  /* Compact avatar block on mobile cards. */
+  .i_tab_container .tab_subscriber_avatar img,
+  .i_responsive_table .tab_subscriber_avatar img {
+    width: 28px; height: 28px; border-radius: 50%;
+  }
+  /* Pagination: wrap and center under the cards. */
+  .i_responsive_table + .i_become_creator_box_footer .pagination,
+  .i_responsive_table ~ .i_become_creator_box_footer .pagination,
+  .i_tab_container + .i_become_creator_box_footer .pagination,
+  .i_tab_container ~ .i_become_creator_box_footer .pagination {
+    display: flex; flex-wrap: wrap; gap: 6px; justify-content: center;
+  }
+
+  /* Empty-state placeholder inside a tab container should not look like a card. */
+  .i_tab_container .no_creator_f_wrap {
+    background: transparent;
+    box-shadow: none;
+    padding: 16px 8px;
+    text-align: center;
+  }
+}
+
+/* Dark theme card background tweak (if night_style class is present). */
+@media (max-width: 768px) {
+  body.night .i_tab_container .i_tab_list_item,
+  body.night .i_responsive_table .i_tab_list_item,
+  .night_style .i_tab_container .i_tab_list_item,
+  .night_style .i_responsive_table .i_tab_list_item,
+  body[data-theme="dark"] .i_tab_container .i_tab_list_item,
+  body[data-theme="dark"] .i_responsive_table .i_tab_list_item {
+    background: rgba(255,255,255,0.04);
+  }
+}

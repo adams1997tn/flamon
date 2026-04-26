@@ -148,8 +148,38 @@ $safeMercadoPagoCvu = (string)$iN->iN_Secure($mercadoPagoCvu ?? '');
 </div>
 
 <div class="i_become_creator_box_footer">
-  <div class="i_nex_btn pyot_Next transition"><?php echo iN_HelpSecure($LANG['next']);?></div>
+  <div class="pyot_footer_actions">
+    <div class="i_nex_btn i_skip_btn pyot_Skip transition" id="pyot_skip_btn"><?php echo iN_HelpSecure($LANG['skip'] ?? 'Skip');?></div>
+    <div class="i_nex_btn pyot_Next transition" id="pyot_next_btn"><?php echo iN_HelpSecure($LANG['next']);?></div>
+  </div>
 </div>
+<div id="pyotDebugPanel" style="display:none;position:fixed;bottom:8px;right:8px;width:380px;max-height:240px;overflow:auto;background:#0b1220;color:#e6edf3;font:12px/1.4 ui-monospace,Menlo,Consolas,monospace;border:1px solid #1f2937;border-radius:8px;padding:8px 10px;z-index:99999;box-shadow:0 8px 24px rgba(0,0,0,0.35);">
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+    <strong style="color:#7dd3fc;">Payout Debug</strong>
+    <span style="cursor:pointer;color:#94a3b8;" onclick="document.getElementById('pyotDebugPanel').style.display='none';">×</span>
+  </div>
+  <div id="pyotDebugLog" style="white-space:pre-wrap;word-break:break-word;"></div>
+</div>
+<style>
+.i_become_creator_box_footer{ overflow:hidden; }
+.i_become_creator_box_footer .pyot_footer_actions{
+  display:flex; justify-content:flex-end; align-items:center; gap:10px;
+}
+.i_become_creator_box_footer .pyot_footer_actions .i_nex_btn{
+  float:none !important; margin:0 !important;
+}
+.i_become_creator_box_footer .i_skip_btn{
+  background-color: transparent;
+  color: #468cef;
+  border: 1px solid #468cef;
+}
+.i_become_creator_box_footer .i_skip_btn:hover{
+  background-color: rgba(70,140,239,0.08);
+  color: #1170c4;
+  border-color: #1170c4;
+  box-shadow: none;
+}
+</style>
 <script src="<?php echo iN_HelpSecure($base_url); ?>themes/<?php echo iN_HelpSecure($currentTheme); ?>/js/payoutHandler.js?v=<?php echo iN_HelpSecure($version); ?>"></script>
 <link rel="stylesheet" href="<?php echo iN_HelpSecure($base_url); ?>themes/<?php echo iN_HelpSecure($currentTheme); ?>/css/bank_transfer_form.css?v=<?php echo iN_HelpSecure($version); ?>">
 <script src="<?php echo iN_HelpSecure($base_url); ?>themes/<?php echo iN_HelpSecure($currentTheme); ?>/js/bank_transfer_form.js?v=<?php echo iN_HelpSecure($version); ?>"></script>

@@ -3,9 +3,42 @@ $themeName = isset($currentTheme) ? (string)$currentTheme : 'default';
 $baseThemePath = rtrim((string)$base_url, '/') . '/themes/' . $themeName;
 ?>
 
+<!-- Viewport upgrade: ensure every page advertises foldable-safe viewport
+     (viewport-fit=cover for safe-area, and remove maximum-scale lock so
+      foldable users can pinch-zoom when needed). Runs ASAP, before paint. -->
+<script>
+(function () {
+  try {
+    var vp = document.querySelector('meta[name="viewport"]');
+    if (!vp) {
+      vp = document.createElement('meta');
+      vp.setAttribute('name', 'viewport');
+      (document.head || document.documentElement).appendChild(vp);
+    }
+    var content = vp.getAttribute('content') || '';
+    // Strip maximum-scale / minimum-scale / user-scalable for accessibility.
+    content = content
+      .split(',')
+      .map(function (p) { return p.trim(); })
+      .filter(function (p) {
+        return p && !/^(maximum-scale|minimum-scale|user-scalable)\s*=/i.test(p);
+      });
+    var has = function (key) {
+      return content.some(function (p) { return p.toLowerCase().indexOf(key) === 0; });
+    };
+    if (!has('width=')) content.unshift('width=device-width');
+    if (!has('initial-scale=')) content.push('initial-scale=1');
+    if (!has('viewport-fit=')) content.push('viewport-fit=cover');
+    vp.setAttribute('content', content.join(', '));
+  } catch (e) { /* no-op */ }
+})();
+</script>
+
 <!-- Common Scripts -->
 <script src="<?php echo iN_HelpSecure(dizzy_asset_url('themes/' . $themeName . '/js/jquery-v3.7.1.min.js')); ?>"></script>
 <script src="<?php echo iN_HelpSecure(dizzy_asset_url('themes/' . $themeName . '/js/jquery.form.js', (string)$version)); ?>"></script>
+<!-- Auto-label every responsive table cell from its header (mobile stacked rows). -->
+<script src="<?php echo iN_HelpSecure(dizzy_asset_url('themes/' . $themeName . '/js/responsive-tables.js', (string)$version)); ?>" defer></script>
 <script src="<?php echo iN_HelpSecure(dizzy_asset_url('themes/' . $themeName . '/js/share.js', (string)$version)); ?>" defer></script>
 <script src="<?php echo iN_HelpSecure(dizzy_asset_url('themes/' . $themeName . '/js/clipboard/clipboard.min.js')); ?>" defer></script>
 <script src="<?php echo iN_HelpSecure(dizzy_asset_url('themes/' . $themeName . '/js/lightGallery/lightgallery-all.min.js')); ?>" defer></script>

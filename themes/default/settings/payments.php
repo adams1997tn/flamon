@@ -15,7 +15,7 @@ if (isset($_GET["page-id"])) {
        <div class="i_moda_header_nt"><strong><?php echo iN_HelpSecure($LANG['all_processing_fee_note']);?></strong></div>
     </div>
     <div class="i_settings_wrapper_items">
-       <div class="i_tab_container">
+       <div class="i_tab_container i_responsive_table">
            <!--PAYMENTS TABLE HEADER-->
            <div class="i_tab_header flex_">
                <div class="tab_item tab_detail_item_maxwidth"><?php echo iN_HelpSecure($LANG['id']);?></div>
@@ -69,8 +69,8 @@ if (isset($_GET["page-id"])) {
             ?>
                 <!--ITEM-->
                 <div class="i_tab_list_item flex_">
-                    <div class="tab_detail_item tab_detail_item_maxwidth"><?php echo iN_HelpSecure($paymentDataID);?></div>
-                    <div class="tab_detail_item truncated">
+                    <div class="tab_detail_item tab_detail_item_maxwidth" data-label="<?php echo iN_HelpSecure($LANG['id']);?>"><?php echo iN_HelpSecure($paymentDataID);?></div>
+                    <div class="tab_detail_item truncated" data-label="<?php echo iN_HelpSecure($LANG['paid_by']);?>">
                         <a href="<?php echo iN_HelpSecure($base_url).$payerUserName;?>">
                         <div class="tabing_non_justify flex_">
                             <div class="tab_subscriber_avatar">
@@ -80,18 +80,18 @@ if (isset($_GET["page-id"])) {
                         </div>
                         </a>
                     </div>
-                    <div class="tab_detail_item item_mobile"><?php echo gmdate("d/m/Y", $paymentDataPaymentTime);?></div>
-                    <div class="tab_detail_item item_mobile"><?php echo iN_HelpSecure(formatCurrency($paymentDataPaymentAmount, $currencyCode));?></div>
-                    <div class="tab_detail_item item_mobile"><?php echo iN_HelpSecure(formatCurrency($isWalletTopUp ? 0 : (float)$paymentDataPaymentAdminEarning, $currencyCode));?></div>
-                    <div class="tab_detail_item item_mobile"><?php echo iN_HelpSecure(formatCurrency($isWalletTopUp ? 0 : (float)$paymentDataPaymentAgencyEarning, $currencyCode));?></div>
-                    <div class="tab_detail_item">
+                    <div class="tab_detail_item item_mobile" data-label="<?php echo iN_HelpSecure($LANG['date']);?>"><?php echo gmdate("d/m/Y", $paymentDataPaymentTime);?></div>
+                    <div class="tab_detail_item item_mobile" data-label="<?php echo iN_HelpSecure($LANG['amount']);?>"><?php echo iN_HelpSecure(formatCurrency($paymentDataPaymentAmount, $currencyCode));?></div>
+                    <div class="tab_detail_item item_mobile" data-label="<?php echo iN_HelpSecure($LANG['admin_cut']);?>"><?php echo iN_HelpSecure(formatCurrency($isWalletTopUp ? 0 : (float)$paymentDataPaymentAdminEarning, $currencyCode));?></div>
+                    <div class="tab_detail_item item_mobile" data-label="<?php echo iN_HelpSecure($LANG['agency_cut']);?>"><?php echo iN_HelpSecure(formatCurrency($isWalletTopUp ? 0 : (float)$paymentDataPaymentAgencyEarning, $currencyCode));?></div>
+                    <div class="tab_detail_item" data-label="<?php echo iN_HelpSecure($LANG['creator_net']);?>">
                         <?php
                             $earning = $isWalletTopUp ? 0 : (is_numeric($paymentDataPaymentUserEarning) ? (float)$paymentDataPaymentUserEarning : 0);
                             echo iN_HelpSecure(formatCurrency($earning, $currencyCode));
                         ?>
                     </div>
-                    <div class="tab_detail_item item_mobile"><span class="flex_ tabing ty_<?php echo iN_HelpSecure($paymentDataPaymentType);?>"><?php echo iN_HelpSecure($paymentTypeLabel);?></span></div>
-                    <div class="tab_detail_item item_mobile">
+                    <div class="tab_detail_item item_mobile" data-label="<?php echo iN_HelpSecure($LANG['pay_type']);?>"><span class="flex_ tabing ty_<?php echo iN_HelpSecure($paymentDataPaymentType);?>"><?php echo iN_HelpSecure($paymentTypeLabel);?></span></div>
+                    <div class="tab_detail_item item_mobile" data-label="<?php echo iN_HelpSecure($LANG['invoice_number']);?>">
                         <?php if ($invoiceToken) { ?>
                             <a class="table_invoice_link" target="_blank" href="<?php echo iN_HelpSecure($base_url).'invoice?token='.iN_HelpSecure($invoiceToken);?>">
                                 <?php echo iN_HelpSecure($invoiceLinkLabel);?>

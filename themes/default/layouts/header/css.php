@@ -11,6 +11,9 @@ $styleFile = $lightDark === 'light' ? 'style' : 'night_style';
 <link rel="stylesheet" href="<?php echo iN_HelpSecure(dizzy_asset_url('themes/' . $themeName . '/css/swiper/swiper-bundle.css')); ?>">
 <link rel="stylesheet" href="<?php echo iN_HelpSecure(dizzy_asset_url('themes/' . $themeName . '/css/audioplayer.css', 'm11')); ?>">
 
+<!-- Responsive & foldable safety layer (loaded last so it can override) -->
+<link rel="stylesheet" href="<?php echo iN_HelpSecure(dizzy_asset_url('themes/' . $themeName . '/css/responsive-foldables.css', (string)$version)); ?>">
+
 <?php if ($logedIn == 1): ?>
   <!-- Authenticated User Styles -->
   <link rel="stylesheet" href="<?php echo iN_HelpSecure(dizzy_asset_url('themes/' . $themeName . '/css/checkbox/checkbox.css')); ?>">
@@ -18,14 +21,22 @@ $styleFile = $lightDark === 'light' ? 'style' : 'night_style';
 <?php endif; ?>
 
 <style type="text/css">
-/* Custom header CSS from admin panel */
-<?php echo iN_HelpSecure($customHeaderCSSCode, 0, false); ?>
+<?php
+/* -----------------------------------------------------------
+   Build all dynamic CSS as a PHP string, then echo once.
+   Keeping PHP tags out of the <style> body avoids spurious
+   "at-rule or selector expected" errors in IDE CSS linters
+   while changing nothing about the rendered output.
+   ----------------------------------------------------------- */
+$dynamicCss  = "/* Custom header CSS from admin panel */\n";
+$dynamicCss .= iN_HelpSecure($customHeaderCSSCode, 0, false) . "\n";
 
-/* Dark mode custom CSS from admin panel */
-<?php if ($lightDark === 'dark' && !empty($customNightCSSCode)) {
-    echo iN_HelpSecure($customNightCSSCode, 0, false);
-} ?>
+if ($lightDark === 'dark' && !empty($customNightCSSCode)) {
+    $dynamicCss .= "/* Dark mode custom CSS from admin panel */\n";
+    $dynamicCss .= iN_HelpSecure($customNightCSSCode, 0, false) . "\n";
+}
 
+$dynamicCss .= <<<CSS
 /* General Stories Box Style */
 .stories_wrapper {
   padding: 16px 0;
@@ -45,112 +56,125 @@ $styleFile = $lightDark === 'light' ? 'style' : 'night_style';
             backdrop-filter: blur(6px);
   }
 }
+CSS;
+$dynamicCss .= "\n";
 
-/* Header SVG Fill Color */
-<?php if ($headerSVGColor): ?>
-.i_header_right .i_h_in svg,
-.i_header_right .i_header_item_icon_box svg {
-  fill: #<?php echo iN_HelpSecure($headerSVGColor); ?> !important;
+if ($headerSVGColor) {
+    $c = iN_HelpSecure($headerSVGColor);
+    $dynamicCss .= "\n/* Header SVG Fill Color */\n"
+        . ".i_header_right .i_h_in svg,\n"
+        . ".i_header_right .i_header_item_icon_box svg {\n"
+        . "  fill: #{$c} !important;\n"
+        . "}\n";
 }
-<?php endif; ?>
 
-/* Header Top Gradient */
-<?php if ($headerTopColor): ?>
-.header:before {
-  background: #<?php echo iN_HelpSecure($headerTopColor); ?> !important;
+if ($headerTopColor) {
+    $c = iN_HelpSecure($headerTopColor);
+    $dynamicCss .= "\n/* Header Top Gradient */\n"
+        . ".header:before {\n"
+        . "  background: #{$c} !important;\n"
+        . "}\n";
 }
-<?php endif; ?>
 
-/* Left Menu SVG Icons */
-<?php if ($leftMenuSVGColor): ?>
-.i_left_menu_box svg,
-.i_s_menu_box svg,
-.i_settings_wrapper_title_txt svg {
-  fill: #<?php echo iN_HelpSecure($leftMenuSVGColor); ?> !important;
+if ($leftMenuSVGColor) {
+    $c = iN_HelpSecure($leftMenuSVGColor);
+    $dynamicCss .= "\n/* Left Menu SVG Icons */\n"
+        . ".i_left_menu_box svg,\n"
+        . ".i_s_menu_box svg,\n"
+        . ".i_settings_wrapper_title_txt svg {\n"
+        . "  fill: #{$c} !important;\n"
+        . "}\n";
 }
-<?php endif; ?>
 
-/* Left Menu Text Color */
-<?php if ($MenuTextColor): ?>
-.i_s_menu_wrapper a,
-.i_s_menu_box,
-.m_tit,
-.live_title {
-  color: #<?php echo iN_HelpSecure($MenuTextColor); ?> !important;
+if ($MenuTextColor) {
+    $c = iN_HelpSecure($MenuTextColor);
+    $dynamicCss .= "\n/* Left Menu Text Color */\n"
+        . ".i_s_menu_wrapper a,\n"
+        . ".i_s_menu_box,\n"
+        . ".m_tit,\n"
+        . ".live_title {\n"
+        . "  color: #{$c} !important;\n"
+        . "}\n";
 }
-<?php endif; ?>
 
-/* Post Section Icon Colors */
-<?php if ($postSectionSVGColor): ?>
-.i_image_video_btn svg,
-.form_who_see .form_who_see_icon_set svg,
-.i_pb_emojis_Box svg,
-.i_post_menu_item_out:hover svg {
-  fill: #<?php echo iN_HelpSecure($postSectionSVGColor); ?> !important;
+if ($postSectionSVGColor) {
+    $c = iN_HelpSecure($postSectionSVGColor);
+    $dynamicCss .= "\n/* Post Section Icon Colors */\n"
+        . ".i_image_video_btn svg,\n"
+        . ".form_who_see .form_who_see_icon_set svg,\n"
+        . ".i_pb_emojis_Box svg,\n"
+        . ".i_post_menu_item_out:hover svg {\n"
+        . "  fill: #{$c} !important;\n"
+        . "}\n";
 }
-<?php endif; ?>
 
-/* Post Action Icons */
-<?php if ($postIconSVGColor): ?>
-.i_post_menu svg,
-.in_like svg,
-.in_tips svg,
-.in_comment svg,
-.in_share svg,
-.in_social_share svg,
-.in_save svg {
-  fill: #<?php echo iN_HelpSecure($postIconSVGColor); ?> !important;
+if ($postIconSVGColor) {
+    $c = iN_HelpSecure($postIconSVGColor);
+    $dynamicCss .= "\n/* Post Action Icons */\n"
+        . ".i_post_menu svg,\n"
+        . ".in_like svg,\n"
+        . ".in_tips svg,\n"
+        . ".in_comment svg,\n"
+        . ".in_share svg,\n"
+        . ".in_social_share svg,\n"
+        . ".in_save svg {\n"
+        . "  fill: #{$c} !important;\n"
+        . "}\n";
 }
-<?php endif; ?>
 
-/* Modal/Popup SVG Icons */
-<?php
 $modalSvgColor = $postIconSVGColor ?: $postSectionSVGColor;
-if ($modalSvgColor):
+if ($modalSvgColor) {
+    $c = iN_HelpSecure($modalSvgColor);
+    $dynamicCss .= "\n/* Modal/Popup SVG Icons */\n"
+        . ".popClose svg,\n"
+        . ".shareClose svg,\n"
+        . ".coverCropClose svg,\n"
+        . ".community_manage_card .communityEditModalBtn svg {\n"
+        . "  fill: #{$c} !important;\n"
+        . "}\n";
+}
+
+if ($publishBTNColor) {
+    $c = iN_HelpSecure($publishBTNColor);
+    $dynamicCss .= "\n/* Publish Button Color */\n"
+        . ".publish_btn,\n"
+        . ".alertBtnRight,\n"
+        . ".send_tip_btn {\n"
+        . "  background-color: #{$c} !important;\n"
+        . "}\n";
+}
+
+if ($createLiveStreamingsBtnColor) {
+    $c = iN_HelpSecure($createLiveStreamingsBtnColor);
+    $dynamicCss .= "\n/* Live Streaming Button */\n"
+        . ".c_live_streaming,\n"
+        . ".new_s_first,\n"
+        . ".new_s_second {\n"
+        . "  background-color: #{$c} !important;\n"
+        . "}\n";
+}
+
+if ($textHoverColor) {
+    $c = iN_HelpSecure($textHoverColor);
+    $dynamicCss .= "\n/* Hover Effects (Buttons, Menus, etc.) */\n"
+        . ".i_left_menu_box:hover,\n"
+        . ".btest .live_item_cont .live_item:hover,\n"
+        . ".i_header_btn_item:hover,\n"
+        . ".i_u_details:hover,\n"
+        . ".i_header_others_item:hover,\n"
+        . ".i_sponsorad a:hover,\n"
+        . ".i_message_wrapper:hover,\n"
+        . ".i_s_menu_box:hover,\n"
+        . ".form_btn:hover,\n"
+        . ".form_who_see:hover,\n"
+        . ".i_pb_emojis:hover,\n"
+        . ".shareClose:hover,\n"
+        . ".coverCropClose:hover,\n"
+        . ".i_post_menu_item_out:hover {\n"
+        . "  background-color: #{$c} !important;\n"
+        . "}\n";
+}
+
+echo $dynamicCss;
 ?>
-.popClose svg,
-.shareClose svg,
-.coverCropClose svg,
-.community_manage_card .communityEditModalBtn svg {
-  fill: #<?php echo iN_HelpSecure($modalSvgColor); ?> !important;
-}
-<?php endif; ?>
-
-/* Publish Button Color */
-<?php if ($publishBTNColor): ?>
-.publish_btn,
-.alertBtnRight,
-.send_tip_btn {
-  background-color: #<?php echo iN_HelpSecure($publishBTNColor); ?> !important;
-}
-<?php endif; ?>
-
-/* Live Streaming Button */
-<?php if ($createLiveStreamingsBtnColor): ?>
-.c_live_streaming,
-.new_s_first,
-.new_s_second {
-  background-color: #<?php echo iN_HelpSecure($createLiveStreamingsBtnColor); ?> !important;
-}
-<?php endif; ?>
-
-/* Hover Effects (Buttons, Menus, etc.) */
-<?php if ($textHoverColor): ?>
-.i_left_menu_box:hover,
-.btest .live_item_cont .live_item:hover,
-.i_header_btn_item:hover,
-.i_u_details:hover,
-.i_header_others_item:hover,
-.i_sponsorad a:hover,
-.i_message_wrapper:hover,
-.i_s_menu_box:hover,
-.form_btn:hover,
-.form_who_see:hover,
-.i_pb_emojis:hover,
-.shareClose:hover,
-.coverCropClose:hover,
-.i_post_menu_item_out:hover {
-  background-color: #<?php echo iN_HelpSecure($textHoverColor); ?> !important;
-}
-<?php endif; ?>
 </style>

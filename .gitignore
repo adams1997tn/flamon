@@ -28,3 +28,7 @@ includes/logs/
 *.log
 .user.ini
 
+
+# Local DB credentials - never commit
+includes/connect.php
+

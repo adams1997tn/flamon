@@ -1419,3 +1419,205 @@ img {
     padding: 0.5rem 0.8rem;
   }
 }
+
+/* =============================================================
+   COMPREHENSIVE MOBILE RESPONSIVE FIXES
+   Targets foldables (Galaxy Z Fold cover ~344px, inner ~673-884px),
+   small phones (≤420px), standard phones (≤640px), and tablets
+   (≤900px). Also enforces global no-horizontal-scroll safety.
+   ============================================================= */
+
+/* Universal safety: no element should overflow horizontally. */
+.landing-two-page,
+.landing-two-page main,
+.landing-two-page section,
+.landing-two-page header { max-width: 100vw; }
+.landing-two-page * { min-width: 0; }
+
+/* Hero claim form: stack on narrow screens to avoid overflow. */
+.hero-claim {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  align-items: center;
+  background: var(--white);
+  border-radius: 999px;
+  padding: 0.4rem;
+  width: min(420px, 100%);
+}
+
+@media (max-width: 900px) {
+  .hero-wrapper { padding: 1rem; min-height: auto; }
+  .hero {
+    grid-template-columns: 1fr;
+    padding: 1.5rem 0.5rem;
+    gap: 2rem;
+  }
+  .hero-text { text-align: center; }
+  .hero-claim { margin: 0 auto; }
+}
+
+/* Hero cards: shrink and re-anchor for foldable / phone. */
+@media (max-width: 768px) {
+  .card { width: min(280px, 92vw); }
+  .card-image { height: 200px; }
+  .hero-cards {
+    min-height: 360px;
+    width: 100%;
+    padding: 1rem 0;
+  }
+}
+
+@media (max-width: 480px) {
+  .card { width: min(260px, 90vw); }
+  .card-image { height: 180px; }
+  .hero-cards { min-height: 320px; }
+  .card-body { padding: 1rem; }
+  .card-footer { padding: 0.7rem 1rem; font-size: 0.8rem; }
+}
+
+/* Galaxy Z Fold cover screen (~344px wide). */
+@media (max-width: 360px) {
+  .card { width: min(240px, 88vw); border-radius: 24px; }
+  .card-image { height: 160px; }
+  .hero-cards { min-height: 290px; }
+  .card-body h3 { font-size: 1rem; }
+  .avatar-thumb { width: 38px; height: 38px; }
+}
+
+/* Hero claim form: fully stack at very narrow widths. */
+@media (max-width: 480px) {
+  .hero-claim {
+    flex-direction: column;
+    border-radius: 22px;
+    padding: 0.6rem;
+    gap: 0.5rem;
+  }
+  .hero-claim__prefix,
+  .hero-claim input,
+  .hero-claim__btn {
+    width: 100%;
+    text-align: center;
+  }
+  .hero-claim__btn { padding: 0.85rem 1rem; }
+}
+
+/* Header: search bar and actions condense on tablet/phone. */
+@media (max-width: 900px) {
+  .site-header {
+    grid-template-columns: auto 1fr auto;
+    gap: 0.5rem;
+    padding: 0.5rem 0.8rem;
+  }
+  .search-bar {
+    flex: 1 1 auto;
+    padding: 0.5rem 0.8rem;
+    font-size: 0.9rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .site-header {
+    grid-template-columns: auto 1fr auto;
+    gap: 0.4rem;
+  }
+  .logo { width: 70px; height: 36px; }
+  .search-bar { font-size: 0.85rem; padding: 0.45rem 0.7rem; }
+  .search-bar input { font-size: 0.85rem; min-width: 0; }
+  .btn { padding: 0.45rem 1rem; font-size: 0.85rem; }
+}
+
+/* Movement blurb: reduce padding on small screens. */
+@media (max-width: 480px) {
+  .movement-blurb {
+    padding: 2rem 1rem;
+    gap: 1.5rem;
+  }
+  .movement-blurb__headline {
+    font-size: clamp(1.6rem, 9vw, 2.4rem);
+    letter-spacing: 0.02em;
+    line-height: 1.05;
+    overflow-wrap: anywhere;
+  }
+  .movement-blurb__text { font-size: 0.95rem; line-height: 1.6; }
+}
+
+/* Earnings simulator: stack control rows cleanly. */
+@media (max-width: 640px) {
+  .earnings-sim { padding: 2rem 1rem; }
+  .earnings-sim__inner { padding: 1.5rem 1rem; border-radius: 20px; }
+  .earnings-sim__controls { gap: 1.5rem; margin-bottom: 1.5rem; }
+  .earnings-sim__control {
+    grid-template-columns: 1fr;
+    row-gap: 0.6rem;
+  }
+  .earnings-sim__value { justify-self: start; font-size: 1.2rem; }
+}
+
+/* FAQ: stack into single column with consistent padding. */
+@media (max-width: 768px) {
+  .faq { padding: 2.5rem 1rem 3rem; }
+  .faq__content {
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+  }
+  .faq__title { font-size: clamp(1.6rem, 7vw, 2.4rem); }
+  .faq__description { max-width: 100%; }
+  .faq__card-button {
+    padding: 1rem 1.1rem;
+    font-size: 0.95rem;
+    gap: 0.75rem;
+  }
+}
+
+/* Gallery cards: tighten on small phones and Fold cover. */
+@media (max-width: 480px) {
+  .cp-gallery { padding: 24px 0; }
+  .cp-gallery-intro { padding: 0 16px 12px; }
+  .cp-gallery-intro h2 { font-size: 1.5rem; }
+  .cp-gallery-card { width: 160px; height: 240px; }
+  .cp-gallery-card__info {
+    padding: 0 12px 12px;
+    padding-top: min(55%, 130px);
+  }
+  .cp-gallery-card__avatar { width: 30px; height: 30px; }
+  .cp-gallery-card__fullname { font-size: 0.72rem; }
+  .cp-gallery-card__username { font-size: 0.68rem; }
+  .cp-gallery-card__bio { display: none; }
+  .cp-gallery-card__stat-value { font-size: 0.7rem; }
+  .cp-gallery-card__stat-label { font-size: 0.55rem; }
+  .cp-gallery-card__button { font-size: 0.78rem; padding: 8px 0; }
+}
+
+@media (max-width: 360px) {
+  .cp-gallery-card { width: 140px; height: 220px; }
+  .cp-gallery-card__info { padding-top: min(55%, 110px); }
+}
+
+/* Feature panels: ensure they reflow on Fold cover. */
+@media (max-width: 360px) {
+  .feature-panels { gap: 0.6rem; }
+  .feature-panel.active { min-height: 240px; }
+}
+
+/* Hero text headline never overflows on tiny screens. */
+@media (max-width: 480px) {
+  .hero-text h1 {
+    font-size: clamp(1.8rem, 9vw, 2.6rem);
+    overflow-wrap: anywhere;
+  }
+  .hero-text .lede { font-size: 0.95rem; }
+}
+
+/* Search results dropdown shouldn't overflow viewport. */
+@media (max-width: 768px) {
+  .i_general_box_search_container {
+    width: calc(100vw - 1rem);
+    left: 50% !important;
+    transform: translateX(-50%);
+    max-width: 100vw;
+  }
+}
+
+/* Footer container should respect viewport. */
+.footer_container_out { max-width: 100vw; overflow-x: hidden; }
