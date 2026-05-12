@@ -1927,6 +1927,138 @@ if ($requestData['paymentOption'] == 'paytm') {
 	}
 
 	paymentResponse($paymentResponseData);
+} else if ($requestData['paymentOption'] == 'konnect') {
+	$orderId = $requestData['orderId'] ?? ($requestData['order_id'] ?? null);
+	if (!$orderId) {
+		paymentResponse([
+			'status'  => false,
+			'rawData' => $requestData,
+			'data'    => preparePaymentData(null, null, null, 'konnect'),
+		]);
+	}
+
+	$pData = DB::one("SELECT * FROM i_user_payments WHERE order_key = ? AND payment_option = 'konnect' LIMIT 1", [$orderId]);
+	$paymentRef = $pData['konnect_payment_ref'] ?? ($requestData['payment_ref'] ?? null);
+	if (!$pData || !$paymentRef) {
+		paymentResponse([
+			'status'  => false,
+			'rawData' => $requestData,
+			'data'    => preparePaymentData($orderId, null, $paymentRef, 'konnect'),
+		]);
+	}
+
+	if (!class_exists('\\KonnectService', false)) {
+		require_once __DIR__ . '/../includes/payment/KonnectService.php';
+	}
+	try {
+		$konnect = new \KonnectService();
+		$payment = $konnect->verifyPayment((string) $paymentRef);
+	} catch (Throwable $e) {
+		paymentResponse([
+			'status'  => false,
+			'rawData' => ['error' => $e->getMessage()],
+			'data'    => preparePaymentData($orderId, null, $paymentRef, 'konnect'),
+		]);
+	}
+
+	$status = strtolower($payment['status'] ?? '');
+	$amountFromGateway = isset($payment['amount']) ? ((float) $payment['amount'] / 1000.0) : null; // millimes -> decimal
+	$expectedCurrency = strtoupper((string) ($configData['payments']['gateway_configuration']['konnect']['currency'] ?? 'TND'));
+	$currencyFromGateway = isset($payment['token']) ? strtoupper((string) $payment['token']) : $expectedCurrency;
+	if ($currencyFromGateway && $currencyFromGateway !== $expectedCurrency) {
+		paymentResponse([
+			'status'  => false,
+			'rawData' => $payment,
+			'data'    => preparePaymentData($orderId, $amountFromGateway, $paymentRef, 'konnect'),
+		]);
+	}
+
+	if ($status === 'completed') {
+		$paymentResponseData = [
+			'status'  => true,
+			'rawData' => $payment,
+			'data'    => preparePaymentData($orderId, $amountFromGateway, $paymentRef, 'konnect'),
+		];
+
+		$userPayedPlanID = $pData['credit_plan_id'] ?? null;
+		$payerUserID     = $pData['payer_iuid_fk'] ?? null;
+		$productID       = $pData['paymet_product_id'] ?? null;
+
+		if (!empty($userPayedPlanID)) {
+			$pAData = DB::one("SELECT * FROM i_premium_plans WHERE plan_id = ?", [$userPayedPlanID]);
+			$planAmount = $pAData['plan_amount'] ?? null;
+			$expectedAmount = $planAmount !== null ? round((float) $planAmount, 2) : null;
+			if ($expectedAmount !== null && $amountFromGateway !== null && round((float) $amountFromGateway, 2) !== $expectedAmount) {
+				$paymentResponseData['status'] = false;
+			} else {
+				$paymentUpdated = DB::exec(
+					"UPDATE i_user_payments SET payment_status = 'ok', agency_id_fk = NULL, fee = '0', agency_fee = '0', admin_earning = '0', agency_earning = '0', user_earning = '0' WHERE payer_iuid_fk = ? AND order_key = ? AND payment_type = 'point' AND payment_option = 'konnect' AND payment_status <> 'ok'",
+					[$payerUserID, $orderId]
+				);
+				if ($paymentUpdated > 0) {
+					DB::exec("UPDATE i_users SET wallet_points = wallet_points + ? WHERE iuid = ?", [$planAmount, $payerUserID]);
+				}
+			}
+		} elseif (!empty($productID)) {
+			$productData = DB::one("SELECT * FROM i_user_product_posts WHERE pr_id = ?", [$productID]);
+			$productPrice = isset($productData['pr_price']) ? round((float) $productData['pr_price'], 2) : null;
+			$productOwnerID = $productData['iuid_fk'] ?? null;
+			if ($productPrice !== null && $amountFromGateway !== null && round((float) $amountFromGateway, 2) !== $productPrice) {
+				$paymentResponseData['status'] = false;
+			} else {
+				$split = $iN->iN_CalculateAgencySplit($productOwnerID, $productPrice, $adminFee);
+				$amountString = $productPrice !== null ? number_format($productPrice, 2, '.', '') : '0.00';
+				DB::exec(
+					"UPDATE i_user_payments SET payment_status = 'ok', payed_iuid_fk = ?, agency_id_fk = ?, amount = ?, fee = ?, agency_fee = ?, admin_earning = ?, agency_earning = ?, user_earning = ? WHERE payer_iuid_fk = ? AND order_key = ? AND payment_type = 'product' AND payment_option = 'konnect' AND payment_status <> 'ok'",
+					[
+						$productOwnerID,
+						$split['agency_id'],
+						$amountString,
+						number_format((float) $adminFee, 2, '.', ''),
+						number_format((float) $split['agency_fee'], 2, '.', ''),
+						number_format((float) $split['admin_earning'], 2, '.', ''),
+						number_format((float) $split['agency_earning'], 2, '.', ''),
+						number_format((float) $split['creator_net'], 2, '.', ''),
+						$payerUserID,
+						$orderId,
+					]
+				);
+				DB::exec("UPDATE i_users SET wallet_money = wallet_money + ? WHERE iuid = ?", [number_format((float) $split['creator_net'], 2, '.', ''), $productOwnerID]);
+			}
+		} elseif ($pData && ($pData['payment_type'] ?? '') === 'tips') {
+			iN_CompleteTipPayment($orderId, $amountFromGateway, 'konnect');
+		} elseif ($pData && ($pData['payment_type'] ?? '') === 'agency_boost') {
+			iN_CompleteAgencyBoostPayment($orderId, $amountFromGateway, 'konnect');
+		}
+
+		if (!$paymentResponseData['status']) {
+			$paymentRow = DB::one("SELECT payment_type FROM i_user_payments WHERE order_key = ? LIMIT 1", [$orderId]);
+			if ($paymentRow && ($paymentRow['payment_type'] ?? '') === 'tips') {
+				iN_FailTipPayment($orderId);
+			} elseif ($paymentRow && ($paymentRow['payment_type'] ?? '') === 'agency_boost') {
+				iN_FailAgencyBoostPayment($orderId);
+			} else {
+				DB::exec("DELETE FROM i_user_payments WHERE order_key = ? AND payment_type <> 'campaign_donate'", [$orderId]);
+			}
+		}
+	} else {
+		// failed / expired / pending
+		$paymentResponseData = [
+			'status'  => false,
+			'rawData' => $payment,
+			'data'    => preparePaymentData($orderId, $amountFromGateway, $paymentRef, 'konnect'),
+		];
+		$paymentRow = DB::one("SELECT payment_type FROM i_user_payments WHERE order_key = ? LIMIT 1", [$orderId]);
+		if ($paymentRow && ($paymentRow['payment_type'] ?? '') === 'tips') {
+			iN_FailTipPayment($orderId);
+		} elseif ($paymentRow && ($paymentRow['payment_type'] ?? '') === 'agency_boost') {
+			iN_FailAgencyBoostPayment($orderId);
+		} else {
+			DB::exec("DELETE FROM i_user_payments WHERE order_key = ? AND payment_type <> 'campaign_donate'", [$orderId]);
+		}
+	}
+
+	paymentResponse($paymentResponseData);
 } else if ($requestData['paymentOption'] == 'epoch') {
 	$orderId = $requestData['orderId'] ?? ($requestData['order_id'] ?? ($requestData['x_order_key'] ?? null));
 	if (!$orderId) {

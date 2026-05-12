@@ -363,6 +363,7 @@ if ($page === '' && isset($p_profileID)) {
                     <div id="moreType" data-type="<?php echo iN_HelpSecure($safePageType); ?>" data-po="<?php echo iN_HelpSecure($safePCat); ?>" data-pf="<?php echo iN_HelpSecure($productFilter); ?>">
                         <?php include __DIR__ . '/posts/htmlPosts.php'; ?>
                     </div>
+                    <?php include __DIR__ . '/posts/discoverySeeMore.php'; ?>
                 </div>
             </div>
             <?php
@@ -393,6 +394,7 @@ if ($page === '' && isset($p_profileID)) {
                 <div id="moreType" data-type="<?php echo iN_HelpSecure($safePageType); ?>" data-po="<?php echo iN_HelpSecure($safePCat); ?>" data-pf="<?php echo iN_HelpSecure($productFilter); ?>">
                     <?php include __DIR__ . '/posts/htmlPosts.php'; ?>
                 </div>
+                <?php include __DIR__ . '/posts/discoverySeeMore.php'; ?>
             </div>
             <?php
         }

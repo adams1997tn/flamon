@@ -77,6 +77,7 @@
         case "mercadopago":
         case "moneroo":
         case "yookassa":
+        case "konnect":
         case "epoch":
         case "ccbill":
         case "nowpayments":
@@ -141,6 +142,18 @@
                     window.location.href = response.confirmation_url;
                   } else {
                     $(".lw-show-till-loading").hide();
+                  }
+                  break;
+                case "konnect":
+                  if (response.status === "success" && response.redirect_url) {
+                    window.location.href = response.redirect_url;
+                  } else {
+                    $(".lw-show-till-loading").hide();
+                    var __knMsg = (response && response.message)
+                      ? response.message
+                      : "Konnect payment is not available. Please verify the gateway configuration.";
+                    console.error("[Konnect]", response);
+                    if (typeof window !== "undefined") { window.alert(__knMsg); }
                   }
                   break;
                 case "epoch":

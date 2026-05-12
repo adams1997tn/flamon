@@ -212,6 +212,27 @@ $limitNav = [
                  <div class="rec_not box_not_padding_top"><?php echo iN_HelpSecure($LANG['applied_to_reels_processing_limit']);?></div>
                </div>
             </div>
+
+            <div class="i_general_row_box_item flex_ tabing_non_justify">
+               <div class="irow_box_left flex_">Jamendo Client ID</div>
+               <div class="irow_box_right">
+                 <input type="text"
+                        id="jamendoClientIdInput"
+                        class="i_input flex_"
+                        autocomplete="off"
+                        placeholder="e.g. a1b2c3d4"
+                        value="<?php echo iN_HelpSecure($jamendoClientId ?? ''); ?>">
+                 <button type="button" id="saveJamendoBtn" class="theme_btn_two transition" style="margin-top:8px;">Save</button>
+                 <span class="success_tick tabing flex_ sec_one jamendoSavedTick" style="display:none">
+                    <?php echo html_entity_decode($iN->iN_SelectedMenuIcon('69'));?>
+                 </span>
+                 <div class="rec_not box_not_padding_top">
+                    Free Client ID from <a href="https://devportal.jamendo.com/" target="_blank" rel="noopener">devportal.jamendo.com</a>.
+                    Powers the Reels music library (search, trending, preview, trim).
+                    Leave blank to use the built-in demo tracks.
+                 </div>
+               </div>
+            </div>
                 </div>
             </div>
 
@@ -2073,3 +2094,35 @@ $limitNav = [
         
     </div>
 </div>
+
+<script>
+(function(){
+  if (typeof jQuery === 'undefined') { return; }
+  jQuery(function($){
+    $(document).on('click', '#saveJamendoBtn', function(){
+      var btn = $(this);
+      var input = $('#jamendoClientIdInput');
+      var val = (input.val() || '').trim();
+      btn.prop('disabled', true);
+      $('.jamendoSavedTick').hide();
+      $.ajax({
+        type: 'POST',
+        url: (typeof siteurl !== 'undefined' ? siteurl : '') + 'request/request.php',
+        data: { f: 'saveJamendoClientId', client_id: val, csrf_token: (window.csrfToken || '') },
+        dataType: 'json'
+      }).done(function(resp){
+        if (resp && resp.status === 'ok') {
+          $('.jamendoSavedTick').fadeIn(150);
+          setTimeout(function(){ $('.jamendoSavedTick').fadeOut(400); }, 1800);
+        } else {
+          alert('Save failed: ' + ((resp && resp.message) || 'unknown error'));
+        }
+      }).fail(function(){
+        alert('Network error while saving Jamendo Client ID.');
+      }).always(function(){
+        btn.prop('disabled', false);
+      });
+    });
+  });
+})();
+</script>

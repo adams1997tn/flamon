@@ -52,7 +52,7 @@
       $(`#${payWidth}`).append(loaderWrapper);
       $(".payment_method_box").css("pointer-events", "none");
  
-      if (["paypal", "iyzico", "authorize-net", "bitpay", "mercadopago", "moneroo", "yookassa", "epoch", "ccbill", "nowpayments"].includes(payWidth)) {
+      if (["paypal", "iyzico", "authorize-net", "bitpay", "mercadopago", "moneroo", "yookassa", "konnect", "epoch", "ccbill", "nowpayments"].includes(payWidth)) {
         const requestData = `f=${type}&paymentOption=${payWidth}&creditPlan=${planID}&` + $("#paymentFrm").serialize() + "&" + $.param(userDetails);
 
         $.ajax({
@@ -102,6 +102,17 @@
                 window.location.href = response.confirmation_url;
               } else {
                 $(".lw-show-till-loading").hide();
+              }
+            } else if (payWidth === "konnect") {
+              if (response.status === "success" && response.redirect_url) {
+                window.location.href = response.redirect_url;
+              } else {
+                $(".lw-show-till-loading").hide();
+                var __knMsg = (response && response.message)
+                  ? response.message
+                  : "Konnect payment is not available. Please verify the gateway configuration.";
+                console.error("[Konnect]", response);
+                if (typeof window !== "undefined") { window.alert(__knMsg); }
               }
             } else if (payWidth === "epoch") {
               if (!buildHostedFormAndSubmit(response)) {

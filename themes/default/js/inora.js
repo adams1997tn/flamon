@@ -364,7 +364,15 @@
     });
     $(document).on("click", ".in_comment", function() {
         var ID = $(this).attr("id");
-        $("#comment" + ID).focus();
+        var $wrap = $("#comments_wrap_" + ID);
+        if ($wrap.length) {
+            $wrap.toggleClass("i_post_comments_hidden");
+            if (!$wrap.hasClass("i_post_comments_hidden")) {
+                $("#comment" + ID).focus();
+            }
+        } else {
+            $("#comment" + ID).focus();
+        }
     });
     $(document).on("mouseup touchend", function(e) {
         /*e.preventDefault();*/
@@ -2489,6 +2497,9 @@ $(document).ready(function () {
   $(window).on('scroll', showMoreData);
 
   function showMoreData() {
+    if (window.iN_DisableInfiniteScroll === true) {
+      return;
+    }
     if (
       scrollLoad &&
       $(window).scrollTop() >= $(document).height() - $(window).height() - 500

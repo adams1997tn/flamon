@@ -158,7 +158,7 @@ $LANG = array(
 	'google' => 'Google',
 	'or-directly' => 'or directly',
 	'username-or-email' => 'Username or Email address',
-	'username-or-email-ex' => 'e.g: john or john@hotmail.com',
+	'username-or-email-ex' => 'Username or Email address',
 	'password' => 'Password',
 	'login' => 'Login',
 	'not-member-yet' => 'Not a member yet?  <a href="' . $base_url . 'register">Sign up now!</a>',
@@ -229,7 +229,7 @@ $LANG = array(
 	'image_video' => 'Upload Photo, Video or Audio MP3',
 	/*Post Form*/
 	'publish' => 'Publish',
-	'write_message_add_photo_or_video' => 'Write your message, add your photo or Video ... @Mention... #Hashtag',
+	'write_message_add_photo_or_video' => 'Write your message',
 	/*Subscriber*/
 	/*
 		    {userPostOwnerUserFullName} this is main text don't change it
@@ -2400,6 +2400,13 @@ $LANG = array(
 	/*Version 5.3*/
 	'create_reels' => 'Create Reels',
 	'reels' => 'Reels',
+	'music_add_music' => 'Add music',
+	'music_search_placeholder' => 'Search songs, artists, sounds',
+	'music_no_results' => 'No tracks found.',
+	'music_use' => 'Use',
+	'music_volume_music' => 'Music volume',
+	'music_volume_video' => 'Original sound',
+	'music_trending' => 'Trending',
 	'qa_image_video' => 'Image / Video',
 	'qa_ai' => 'AI',
 	'qa_poll' => 'Poll',
@@ -2604,7 +2611,7 @@ $PAYMENTTYPES = array(
     'frame' => 'Frame'
 );
 $creatorConditions = array(
-	'conditions_document' => 'If you are reading this page, this means that your account is now activated for monetization. Congratulations.<p>The Website will make every effort to reply as soon as possible to the Creator concerning their request to be added to the Creator service. </p><p>Once the Company approves your profile, the Creator can decide whether their Content will be visible to all Users or just their Fans. </p> <p>A tick will now appear next to your nickname. At the same time, an icon will appear indicating that you are a creator.</p> <p>The page that will appear when you click the forward button at the bottom of this page will help you activate some of the buttons in your profile.</p>',
+	'conditions_document' => 'Congratulations! Your account is almost activated. Please note that to be approved for the Creator service, you must have a minimum of 10,000 followers on your social media. Please enter your Instagram and TikTok accounts in the box below for verification. Once your profile is approved, you can choose to make your content visible to all users or just your fans, and a verification tick along with a Creator icon will appear next to your username. Click Forward at the bottom of this page to finish setting up your profile features.</p>',
 );
 
 $PROFILE_CATEGORIES = array(
@@ -3986,6 +3993,17 @@ $LANG['yookassa_currency_note'] = 'IMPORTANT: YooKassa accepts RUB only.';
 $LANG['yookassa_setup_help_title'] = 'Need help configuring YooKassa?';
 $LANG['yookassa_setup_help_steps'] = '<ol><li>Log in to your YooKassa account and open the shop settings.</li><li>Copy the Shop ID and Secret Key for both test and live modes.</li><li>Set the webhook URL to <code>https://yourdomain.com/yookassa_webhook.php</code> and add the header <code>X-Dizzy-Webhook-Secret</code> with your webhook secret.</li><li>Save the webhook secret here and enable YooKassa.</li></ol>';
 $LANG['pay_with_yookassa'] = 'Pay with YooKassa';
+$LANG['konnect_payment'] = 'Konnect Network';
+$LANG['konnect_status'] = 'Konnect Status';
+$LANG['konnect_status_not'] = 'When Konnect status is active, members can complete purchases using Konnect Network (TND).';
+$LANG['konnect_test_api_key'] = 'Sandbox API Key';
+$LANG['konnect_test_wallet_id'] = 'Sandbox Receiver Wallet ID';
+$LANG['konnect_live_api_key'] = 'Live API Key';
+$LANG['konnect_live_wallet_id'] = 'Live Receiver Wallet ID';
+$LANG['konnect_webhook_secret'] = 'Webhook Shared Secret';
+$LANG['konnect_webhook_url'] = 'Webhook URL';
+$LANG['make_sure_for_konnect'] = 'Konnect officially supports TND. Choose another currency only if your account is configured for it.';
+$LANG['pay_with_konnect'] = 'Pay with Konnect';
 $LANG['yookassa_redirect_note'] = 'You will be redirected to YooKassa to complete this payment.';
 $LANG['yookassa_not_available'] = 'YooKassa payment is not available.';
 $LANG['epoch_payment'] = 'EPOCH Payment';

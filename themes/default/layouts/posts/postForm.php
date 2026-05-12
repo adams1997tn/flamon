@@ -9,25 +9,43 @@ $canScheduleLiveButton = $scheduleLiveType !== '';
 ?>
 <div class="i_postFormContainer">
     <?php if ($agoraStatus === '1' && $page !== 'profile') : ?>
+        <?php
+            $liveChevronSvg = '<svg class="i_live_chevron" viewBox="0 0 24 24" width="14" height="14" aria-hidden="true"><path d="M9 6l6 6-6 6" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+            $liveIconPaid = '<svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path fill="#ffffff" d="M13 2.5a1 1 0 1 0-2 0V4.2c-2.6.4-4.5 2.2-4.5 4.6 0 2.8 2.4 3.7 4.5 4.4v4.4c-1.5-.3-2.5-1.2-2.5-2.4a1 1 0 1 0-2 0c0 2.5 2 4.1 4.5 4.5v1.8a1 1 0 1 0 2 0v-1.8c2.7-.4 4.7-2.2 4.7-4.7 0-2.8-2.4-3.8-4.7-4.5V6.2c1.4.3 2.3 1.1 2.3 2.2a1 1 0 1 0 2 0c0-2.3-1.8-3.9-4.3-4.3V2.5Zm-2 8.6c-1.6-.5-2.5-1.1-2.5-2.3 0-1.1.9-2 2.5-2.3v4.6Zm2 2.4c1.7.6 2.7 1.2 2.7 2.5 0 1.2-1.1 2.2-2.7 2.5v-5Z"/></svg>';
+            $liveIconFree = '<svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><g fill="none" stroke="#ffffff" stroke-width="1.9" stroke-linecap="round"><path d="M7.5 9.4a5 5 0 0 0 0 5.2"/><path d="M16.5 9.4a5 5 0 0 1 0 5.2"/><path d="M5 7.2a8 8 0 0 0 0 9.6"/><path d="M19 7.2a8 8 0 0 1 0 9.6"/></g><circle cx="12" cy="12" r="1.8" fill="#ffffff"/></svg>';
+            $liveIconSchedule = '<svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><rect x="3.5" y="5.2" width="17" height="15" rx="2.2" fill="#ffffff"/><rect x="3.5" y="5.2" width="17" height="4.6" rx="2.2" fill="#ffffff"/><path d="M8 3.5v3.4M16 3.5v3.4" stroke="#f59e0b" stroke-width="1.8" stroke-linecap="round"/><rect x="6.5" y="12" width="3" height="3" rx=".6" fill="#f59e0b"/><rect x="10.5" y="12" width="3" height="3" rx=".6" fill="#f59e0b"/><rect x="14.5" y="12" width="3" height="3" rx=".6" fill="#f59e0b"/></svg>';
+        ?>
         <div class="i_postLiveStreaming flex_ tabing">
             <?php if ($canPaidLiveButton) : ?>
-                <div class="i_live_ cNLive flex_ tabing_non_justify transition" data-type="paidLive">
-                    <?php echo html_entity_decode($iN->iN_SelectedMenuIcon('40')); ?>
-                    <?php echo iN_HelpSecure($LANG['create_paid_live_stream_btn'] ?? 'Create Paid Live Stream'); ?>
+                <div class="i_live_ i_live_paid_card cNLive flex_ tabing_non_justify transition" data-type="paidLive">
+                    <span class="i_live_icon_wrap i_live_icon_paid"><?php echo $liveIconPaid; ?></span>
+                    <span class="i_live_text">
+                        <span class="i_live_title"><?php echo iN_HelpSecure($LANG['live_card_paid_title'] ?? 'Paid Live'); ?></span>
+                        <span class="i_live_subtitle"><?php echo iN_HelpSecure($LANG['live_card_paid_sub'] ?? 'Get paid'); ?></span>
+                    </span>
+                    <?php echo $liveChevronSvg; ?>
                 </div>
             <?php endif; ?>
 
             <?php if ($canFreeLiveButton) : ?>
-                <div class="i_live_ cNLive flex_ tabing_non_justify transition" data-type="freeLive">
-                    <?php echo html_entity_decode($iN->iN_SelectedMenuIcon('115')); ?>
-                    <?php echo iN_HelpSecure($LANG['create_free_live_stream_btn'] ?? 'Create Free Live Stream'); ?>
+                <div class="i_live_ i_live_free_card cNLive flex_ tabing_non_justify transition" data-type="freeLive">
+                    <span class="i_live_icon_wrap i_live_icon_free"><?php echo $liveIconFree; ?></span>
+                    <span class="i_live_text">
+                        <span class="i_live_title"><?php echo iN_HelpSecure($LANG['live_card_free_title'] ?? 'Free Live'); ?></span>
+                        <span class="i_live_subtitle"><?php echo iN_HelpSecure($LANG['live_card_free_sub'] ?? 'Go live now'); ?></span>
+                    </span>
+                    <?php echo $liveChevronSvg; ?>
                 </div>
             <?php endif; ?>
 
             <?php if ($canScheduleLiveButton) : ?>
-                <div class="i_live_ cNLive flex_ tabing_non_justify transition" data-type="<?php echo iN_HelpSecure($scheduleLiveType); ?>" data-schedule="1">
-                    <?php echo html_entity_decode($iN->iN_SelectedMenuIcon('73')); ?>
-                    <?php echo iN_HelpSecure($LANG['create_scheduled_live_stream_btn'] ?? 'Create Schedule Live Stream'); ?>
+                <div class="i_live_ i_live_schedule_card cNLive flex_ tabing_non_justify transition" data-type="<?php echo iN_HelpSecure($scheduleLiveType); ?>" data-schedule="1">
+                    <span class="i_live_icon_wrap i_live_icon_schedule"><?php echo $liveIconSchedule; ?></span>
+                    <span class="i_live_text">
+                        <span class="i_live_title"><?php echo iN_HelpSecure($LANG['live_card_schedule_title'] ?? 'Schedule'); ?></span>
+                        <span class="i_live_subtitle"><?php echo iN_HelpSecure($LANG['live_card_schedule_sub'] ?? 'Plan ahead'); ?></span>
+                    </span>
+                    <?php echo $liveChevronSvg; ?>
                 </div>
             <?php endif; ?>
         </div>
@@ -482,7 +500,7 @@ $canScheduleLiveButton = $scheduleLiveType !== '';
             <input type="hidden" id="uploadVal">
         </div>
 
-        <div class="publish_btn transition publish">
+        <div class="publish_btn transition publish" id="publish_btn_main" style="display:none;">
             <?php echo html_entity_decode($iN->iN_SelectedMenuIcon('26')); ?>
             <div class="pbtn"><?php echo iN_HelpSecure($LANG['publish']); ?></div>
         </div>
@@ -493,3 +511,23 @@ if (!isset($disableDayMessage) || !$disableDayMessage) {
     include 'dayMessage.php';
 }
 ?>
+<script type="text/javascript">
+(function(){
+    function togglePublishBtn(){
+        var $ta = $('#newPostT');
+        if (!$ta.length) return;
+        var hasText = $.trim($ta.val() || '') !== '';
+        var hasFiles = $.trim($('#uploadVal').val() || '') !== '';
+        var $btn = $('#publish_btn_main');
+        if (hasText || hasFiles) {
+            if (!$btn.is(':visible')) { $btn.stop(true, true).fadeIn(150); }
+        } else {
+            if ($btn.is(':visible')) { $btn.stop(true, true).fadeOut(120); }
+        }
+    }
+    $(document).on('input keyup change paste cut', '#newPostT', togglePublishBtn);
+    $(document).on('change', '#uploadVal', togglePublishBtn);
+    // After publish, existing code clears textarea and triggers "change" — keep button hidden.
+    $(function(){ togglePublishBtn(); });
+})();
+</script>

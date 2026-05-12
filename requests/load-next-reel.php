@@ -1,5 +1,6 @@
 <?php
 include "../includes/inc.php";
+include_once "../includes/music_helper.php";
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     http_response_code(405);
     exit($LANG['method_not_allowed']);
@@ -10,14 +11,27 @@ if ($lastId <= 0) {
     exit($LANG['invalid_id']);
 }
 $uid = isset($userID) ? (int)$userID : 0;
+$musicCols = dizzy_music_columns_present()
+    ? ", P.music_track_id, P.music_provider, P.music_title, P.music_artist, P.music_url, P.music_cover_url, P.music_start_time, P.music_duration, P.music_volume, P.music_video_volume"
+    : "";
+$overlayCol = dizzy_overlays_column_present() ? ", P.post_overlays" : "";
+$extrasCol = function_exists('dizzy_reel_extras_columns_present') && dizzy_reel_extras_columns_present() ? ", P.post_filter, P.post_video_speed" : "";
 $sql = "
     SELECT P.post_id, P.post_file, P.post_text, P.post_owner_id, P.who_can_see, P.post_wanted_credit, P.comment_status,
-           U.i_username, U.user_avatar, U.i_user_fullname
+           U.i_username, U.user_avatar, U.i_user_fullname, U.payout_method, U.thanks_for_tip{$musicCols}{$overlayCol}{$extrasCol}
     FROM i_posts P
     INNER JOIN i_users U ON P.post_owner_id = U.iuid
     WHERE P.post_type = 'reels'
       AND (P.post_status = '1' OR P.post_owner_id = ?)
       AND P.post_id < ?
+      AND P.post_file IS NOT NULL
+      AND P.post_file <> ''
+      AND EXISTS (
+          SELECT 1 FROM i_user_uploads UU
+          WHERE UU.upload_id = CAST(SUBSTRING_INDEX(P.post_file, ',', 1) AS UNSIGNED)
+            AND UU.uploaded_file_path IS NOT NULL
+            AND UU.uploaded_file_path <> ''
+      )
     ORDER BY P.post_id DESC
     LIMIT 1";
 
@@ -52,6 +66,9 @@ if ($first) {
         } else {
             $missingVideo = true;
         }
+        // Defense-in-depth: never render reels with missing video data.
+        // The SQL above already filters orphan reels; this guards against any race.
+        if ($missingVideo) { exit; }
     $userPostID = isset($reel['post_id']) ? (int)$reel['post_id'] : 0;
     $userPostOwnerID = isset($reel['post_owner_id']) ? (int)$reel['post_owner_id'] : 0;
     $reelOwnerId = $userPostOwnerID;
@@ -173,13 +190,72 @@ if ($first) {
                 </div>
             </div>
 
-            <video src="<?php echo $videoSrc; ?>" autoplay muted playsinline preload="auto" crossorigin="anonymous"></video>
+            <video src="<?php echo $videoSrc; ?>" autoplay muted playsinline preload="auto" crossorigin="anonymous"<?php if (!empty($reel['post_filter']) && $reel['post_filter'] !== 'none') { echo ' data-filter="' . htmlspecialchars($reel['post_filter']) . '"'; } if (!empty($reel['post_video_speed']) && (float)$reel['post_video_speed'] !== 1.0) { echo ' data-speed="' . htmlspecialchars((string)(float)$reel['post_video_speed']) . '"'; } ?>></video>
+            <?php echo dizzy_render_reel_overlays($reel['post_overlays'] ?? ''); ?>
+            <?php
+                $reelMusicTitle  = isset($reel['music_title']) ? (string)$reel['music_title'] : '';
+                $reelMusicArtist = isset($reel['music_artist']) ? (string)$reel['music_artist'] : '';
+                $reelMusicUrl    = isset($reel['music_url']) ? (string)$reel['music_url'] : '';
+                $reelMusicId     = isset($reel['music_track_id']) ? (string)$reel['music_track_id'] : '';
+                $reelMusicCover  = isset($reel['music_cover_url']) ? (string)$reel['music_cover_url'] : '';
+                $reelMusicStart  = isset($reel['music_start_time']) ? (float)$reel['music_start_time'] : 0.0;
+                $reelMusicLen    = isset($reel['music_duration']) ? (float)$reel['music_duration'] : 0.0;
+                $reelMusicVol    = isset($reel['music_volume']) ? (float)$reel['music_volume'] : 0.8;
+                $reelMusicVidVol = isset($reel['music_video_volume']) ? (float)$reel['music_video_volume'] : 0.5;
+                $hasMusic = ($reelMusicUrl !== '' && $reelMusicTitle !== '');
+            ?>
+            <?php if ($hasMusic) { ?>
+                <audio class="reel-music-audio"
+                       src="<?php echo iN_HelpSecure(dizzy_music_proxied_url($reelMusicUrl)); ?>"
+                       preload="metadata"
+                       data-start="<?php echo iN_HelpSecure((string)$reelMusicStart); ?>"
+                       data-duration="<?php echo iN_HelpSecure((string)$reelMusicLen); ?>"
+                       data-volume="<?php echo iN_HelpSecure((string)$reelMusicVol); ?>"
+                       data-video-volume="<?php echo iN_HelpSecure((string)$reelMusicVidVol); ?>"></audio>
+            <?php } ?>
 
             <div class="reel-ui">
                 <div class="left-ui">
                     <div class="user">
-                        <strong><?php echo htmlspecialchars($reel['i_username']); ?></strong>
+                        <?php
+                            $reelOwnerAvatar2 = $iN->iN_UserAvatar((int)$userPostOwnerID, $base_url);
+                            $reelOwnerFullName2 = (string)($reel['i_user_fullname'] ?? $reel['i_username'] ?? '');
+                            $reelOwnerInitial2 = function_exists('mb_substr')
+                                ? mb_strtoupper(mb_substr($reelOwnerFullName2, 0, 1))
+                                : strtoupper(substr($reelOwnerFullName2, 0, 1));
+                            if ($reelOwnerInitial2 === '') { $reelOwnerInitial2 = '?'; }
+                        ?>
+                        <a class="reel-owner-avatar"
+                           href="<?php echo iN_HelpSecure($base_url . ($userPostOwnerUsername ?? '')); ?>"
+                           aria-label="<?php echo iN_HelpSecure($reelOwnerFullName2); ?>">
+                            <span class="reel-owner-avatar-ring" aria-hidden="true"></span>
+                            <span class="reel-owner-avatar-inner">
+                                <img src="<?php echo iN_HelpSecure($reelOwnerAvatar2); ?>"
+                                     alt="<?php echo iN_HelpSecure($reelOwnerFullName2); ?>"
+                                     loading="lazy"
+                                     onerror="this.style.display='none';this.parentNode.classList.add('reel-owner-avatar-fallback');">
+                                <span class="reel-owner-avatar-letter"><?php echo iN_HelpSecure($reelOwnerInitial2); ?></span>
+                            </span>
+                        </a>
+                        <a class="reel-username" href="<?php echo iN_HelpSecure($base_url . ($userPostOwnerUsername ?? '')); ?>">
+                            <strong><?php echo htmlspecialchars($reel['i_username']); ?></strong>
+                        </a>
                     </div>
+                    <?php if ($hasMusic) { ?>
+                        <a class="reel-music-label" href="<?php echo iN_HelpSecure($base_url . 'reels?sound=' . urlencode($reelMusicId)); ?>" title="<?php echo iN_HelpSecure(($reelMusicTitle ?: '') . ' — ' . ($reelMusicArtist ?: '')); ?>">
+                            <span class="reel-music-disc"<?php echo $reelMusicCover !== '' ? ' style="background-image:url(\'' . iN_HelpSecure($reelMusicCover) . '\')"' : ''; ?>></span>
+                            <span class="reel-music-note">
+                                <svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor" aria-hidden="true"><path d="M12 3v10.55A4 4 0 1 0 14 17V7h4V3z"/></svg>
+                            </span>
+                            <span class="reel-music-marquee">
+                                <span class="reel-music-marquee-inner">
+                                    <?php echo iN_HelpSecure($reelMusicTitle); ?><?php if ($reelMusicArtist !== '') { ?> · <?php echo iN_HelpSecure($reelMusicArtist); ?><?php } ?>
+                                    &nbsp;&nbsp;•&nbsp;&nbsp;
+                                    <?php echo iN_HelpSecure($reelMusicTitle); ?><?php if ($reelMusicArtist !== '') { ?> · <?php echo iN_HelpSecure($reelMusicArtist); ?><?php } ?>
+                                </span>
+                            </span>
+                        </a>
+                    <?php } ?>
 
                     <div class="description-wrapper truncated" id="descWrapper">
                       <div class="description" id="descBox">
@@ -189,6 +265,28 @@ if ($first) {
                     </div>
                 </div>
                 <div class="right-ui">
+                    <?php
+                    $reelPayoutMethod = $reel['payout_method'] ?? null;
+                    if ($logedIn != 0 && !empty($reelPayoutMethod) && (int)$userPostOwnerID !== (int)$userID) {
+                        $reelTipCount = (int) DB::col(
+                            "SELECT COUNT(*) FROM i_user_payments
+                             WHERE payed_post_id_fk = ? AND payment_type = 'tips' AND payment_status = 'ok'",
+                            [(int)$userPostID]
+                        );
+                        ?>
+                        <div class="action i_post_item_btn transition reel_tip_btn in_tips <?php echo iN_HelpSecure($loginFormClass); ?>"
+                             data-id="<?php echo iN_HelpSecure($userPostOwnerID); ?>"
+                             data-ppid="<?php echo iN_HelpSecure($userPostID); ?>"
+                             title="<?php echo iN_HelpSecure($LANG['send_tip'] ?? 'Send a tip'); ?>">
+                            <?php echo html_entity_decode($iN->iN_SelectedMenuIcon('144')); ?>
+                        </div>
+                        <span class="lp_sum reel_tip_count flex_ tabing reel_tip_count_<?php echo iN_HelpSecure($userPostID); ?>">
+                            <?php echo $reelTipCount > 0 ? iN_HelpSecure($reelTipCount) : ''; ?>
+                        </span>
+                        <div class="i_thanks_bubble_cont tip_<?php echo iN_HelpSecure($userPostID); ?>" style="display:none;position:absolute;pointer-events:none;">
+                            <div class="i_bubble"><?php echo iN_HelpSecure($LANG['thanks_for_tip'] ?? 'Thanks for the tip.'); ?></div>
+                        </div>
+                    <?php } ?>
                     <div class="action i_post_item_btn <?php echo iN_HelpSecure($likeClass); ?> <?php echo iN_HelpSecure($loginFormClass); ?>"  id="p_l_<?php echo iN_HelpSecure($userPostID); ?>" data-id="<?php echo iN_HelpSecure($userPostID); ?>"><?php echo html_entity_decode($likeIcon); ?></div>
                     <span class="lp_sum flex_ tabing" id="lp_sum_<?php echo iN_HelpSecure($userPostID); ?>"><?php echo iN_HelpSecure($likeSum); ?></span>
                     <div class="action i_post_item_btn transition in_comment"  id="<?php echo iN_HelpSecure($userPostID); ?>"><?php echo html_entity_decode($iN->iN_SelectedMenuIcon('20')); ?></div>

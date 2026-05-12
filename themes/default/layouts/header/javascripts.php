@@ -206,17 +206,7 @@ $baseThemePath = rtrim((string)$base_url, '/') . '/themes/' . $themeName;
   <?php endif; ?>
 <?php endif; ?>
 
-<script>
-  window.pwaInstallTexts = {
-    installButton: "<?php echo iN_HelpSecure($LANG['pwa_install_app'] ?? 'Install App'); ?>",
-    popupTitle: "<?php echo iN_HelpSecure($LANG['pwa_popup_title'] ?? 'Install App'); ?>",
-    popupDescDefault: "<?php echo iN_HelpSecure($LANG['pwa_popup_desc_default'] ?? 'Add this app to your home screen for faster access and a better full-screen experience.'); ?>",
-    popupLater: "<?php echo iN_HelpSecure($LANG['pwa_popup_later'] ?? 'Maybe later'); ?>",
-    iosHelp: "<?php echo iN_HelpSecure($LANG['pwa_ios_install_help'] ?? 'Open this site in Safari, tap Share, then tap Add to Home Screen.'); ?>",
-    iosSafariOnly: "<?php echo iN_HelpSecure($LANG['pwa_ios_safari_only'] ?? 'On iPhone and iPad, app installation is available only in Safari.'); ?>",
-    androidUnavailable: "<?php echo iN_HelpSecure($LANG['pwa_android_install_unavailable'] ?? 'Install popup is not available yet. Please use browser menu > Add to Home screen.'); ?>"
-  };
-</script>
+
 
 <!-- PWA scripts -->
 <script src="<?php echo iN_HelpSecure(dizzy_asset_url('themes/' . $themeName . '/js/main.js', (string)$version, 'r=pwa_install_20260226_5s_popup_iosshare2')); ?>" defer></script>

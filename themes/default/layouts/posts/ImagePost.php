@@ -37,18 +37,43 @@ echo isset($scheduledBadge) ? $scheduledBadge : ''; ?>
                 <a class="truncated" href="<?php echo iN_HelpSecure($base_url) . $userPostOwnerUsername; ?>">
                 <?php echo iN_HelpSecure($userPostOwnerUserFullName); ?>
                 <?php echo html_entity_decode($userVerifiedStatus); ?>
-                <?php echo html_entity_decode($timeStatus);?></a></div>
+                <?php echo html_entity_decode($timeStatus);?></a>
+            </div>
             <div class="i_post_shared_time">
                 <?php if($userPostWhoCanSee == '4'){echo '<div class="premium_amount_he flex_ tabing">'.html_entity_decode($iN->iN_SelectedMenuIcon('40')).$userPostWantedCredit.'</div>';} ;?>
                 <?php if(!empty($communityBadge)){echo $communityBadge;}?>
                 <?php echo html_entity_decode($profileCategoryLink);?>
                 <a href="<?php echo iN_HelpSecure($base_url) . $userPostOwnerUsername; ?>">@
                     <?php echo iN_HelpSecure($userPostOwnerUsername); ?>
-            </a> - <?php echo date('H:i', strtotime($crTime)); ?>
+            </a> <span class="i_post_time_dot">&middot;</span> <span class="i_post_time_ago"><?php
+                $tsPost = is_numeric($crTime) ? (int)$crTime : strtotime((string)$crTime);
+                $diffSecPost = max(0, time() - (int)$tsPost);
+                if ($diffSecPost < 60)            { echo (int)$diffSecPost . 's'; }
+                elseif ($diffSecPost < 3600)      { echo (int)floor($diffSecPost / 60) . 'm'; }
+                elseif ($diffSecPost < 86400)     { echo (int)floor($diffSecPost / 3600) . 'h'; }
+                elseif ($diffSecPost < 604800)    { echo (int)floor($diffSecPost / 86400) . 'd'; }
+                elseif ($diffSecPost < 2592000)   { echo (int)floor($diffSecPost / 604800) . 'w'; }
+                elseif ($diffSecPost < 31536000)  { echo (int)floor($diffSecPost / 2592000) . 'mo'; }
+                else                              { echo (int)floor($diffSecPost / 31536000) . 'y'; }
+            ?></span>
             <?php if(!empty($scheduledMeta)){ echo $scheduledMeta; } ?></div>
             <?php
             $isOwnerOrAdmin = ($logedIn != 0 && ($userPostOwnerID == $userID || $userType == '2'));
             $canModeratePost = ($logedIn != 0 && isset($communityModCanManagePosts) && $communityModCanManagePosts && isset($page) && $page === 'community');
+            ?>
+            <?php
+            // Discovery Feed: show small Follow button when viewer is logged in,
+            // not the author, and not already following the author. Rendered
+            // here so it sits inline (left of the post menu dot) on the same
+            // row as the username/menu.
+            if (!empty($logedIn) && $logedIn != 0
+                && isset($userID, $userPostOwnerID)
+                && (int)$userID !== (int)$userPostOwnerID
+                && !$iN->iN_CheckUserIsInFLWR((int)$userID, (int)$userPostOwnerID)
+                && !$iN->iN_CheckUserIsInSubscriber((int)$userID, (int)$userPostOwnerID)) {
+                $followLabel = $LANG['follow'] ?? 'Follow';
+                echo '<span class="i_fw' . iN_HelpSecure($userPostOwnerID) . ' i_post_follow_btn i_post_follow_inline i_btn_like_item free_follow transition" data-u="' . iN_HelpSecure($userPostOwnerID) . '">+ ' . iN_HelpSecure($followLabel) . '</span>';
+            }
             ?>
             <div class="i_post_menu">
                 <div class="i_post_menu_dot openPostMenu transition" id="<?php echo iN_HelpSecure($userPostID); ?>">
@@ -890,7 +915,7 @@ if (!empty($communityReshareDisabled)) {
 		    <?php }?>
 		    <?php echo html_entity_decode($TotallyPostComment); ?>
     <!--COMMENT FORM COMMENTS-->
-    <div class="i_post_comments_wrapper">
+    <div class="i_post_comments_wrapper i_post_comments_hidden" id="comments_wrap_<?php echo iN_HelpSecure($userPostID); ?>">
         <div class="i_post_comments_box<?php echo $logedIn == 0 ? ' nonePoint' : ''; ?>">
             <!--USER COMMENTS-->
             <div class="i_user_comments" name="i_user_comments_<?php echo iN_HelpSecure($userPostID); ?>" id="i_user_comments_<?php echo iN_HelpSecure($userPostID); ?>">

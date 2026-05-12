@@ -82,7 +82,19 @@
                     <?php
                     $socialInstagram = isset($uData['instagram_url']) ? trim((string)$uData['instagram_url']) : '';
                     $socialTiktok = isset($uData['tiktok_url']) ? trim((string)$uData['tiktok_url']) : '';
-                    if ($socialInstagram !== '' || $socialTiktok !== '') {
+                    $socialFacebook = isset($uData['facebook_url']) ? trim((string)$uData['facebook_url']) : '';
+                    $socialYoutube = isset($uData['youtube_url']) ? trim((string)$uData['youtube_url']) : '';
+                    $socialOther = array();
+                    if (isset($uData['other_social_links']) && trim((string)$uData['other_social_links']) !== '') {
+                        $decodedOther = json_decode((string)$uData['other_social_links'], true);
+                        if (is_array($decodedOther)) {
+                            foreach ($decodedOther as $oL) {
+                                $oL = trim((string)$oL);
+                                if ($oL !== '') { $socialOther[] = $oL; }
+                            }
+                        }
+                    }
+                    if ($socialInstagram !== '' || $socialTiktok !== '' || $socialFacebook !== '' || $socialYoutube !== '' || !empty($socialOther)) {
                     ?>
                     <div class="admin_social_links_card" style="margin:15px 0;padding:18px 20px;border:1px solid #e6e6e6;border-radius:10px;background:#fafbfc;">
                         <div style="font-weight:600;font-size:15px;color:#222;margin-bottom:12px;font-family:system-ui,-apple-system,sans-serif;">
@@ -95,9 +107,32 @@
                         </div>
                         <?php } ?>
                         <?php if ($socialTiktok !== '') { ?>
-                        <div style="display:flex;align-items:center;">
+                        <div style="display:flex;align-items:center;margin-bottom:8px;">
                             <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#000" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right:8px;flex-shrink:0;"><path d="M9 12a4 4 0 1 0 4 4V4a5 5 0 0 0 5 5"/></svg>
                             <a href="<?php echo iN_HelpSecure($socialTiktok); ?>" target="_blank" rel="noopener noreferrer" style="color:#222;font-weight:500;font-size:14px;word-break:break-all;"><?php echo iN_HelpSecure($socialTiktok); ?></a>
+                        </div>
+                        <?php } ?>
+                        <?php if ($socialFacebook !== '') { ?>
+                        <div style="display:flex;align-items:center;margin-bottom:8px;">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#1877F2" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right:8px;flex-shrink:0;"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"/></svg>
+                            <a href="<?php echo iN_HelpSecure($socialFacebook); ?>" target="_blank" rel="noopener noreferrer" style="color:#1877F2;font-weight:500;font-size:14px;word-break:break-all;"><?php echo iN_HelpSecure($socialFacebook); ?></a>
+                        </div>
+                        <?php } ?>
+                        <?php if ($socialYoutube !== '') { ?>
+                        <div style="display:flex;align-items:center;margin-bottom:8px;">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#FF0000" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right:8px;flex-shrink:0;"><path d="M22.54 6.42a2.78 2.78 0 0 0-1.94-2C18.88 4 12 4 12 4s-6.88 0-8.6.46a2.78 2.78 0 0 0-1.94 2A29 29 0 0 0 1 11.75a29 29 0 0 0 .46 5.33A2.78 2.78 0 0 0 3.4 19c1.72.46 8.6.46 8.6.46s6.88 0 8.6-.46a2.78 2.78 0 0 0 1.94-2 29 29 0 0 0 .46-5.25 29 29 0 0 0-.46-5.33z"/><polygon points="9.75 15.02 15.5 11.75 9.75 8.48 9.75 15.02"/></svg>
+                            <a href="<?php echo iN_HelpSecure($socialYoutube); ?>" target="_blank" rel="noopener noreferrer" style="color:#FF0000;font-weight:500;font-size:14px;word-break:break-all;"><?php echo iN_HelpSecure($socialYoutube); ?></a>
+                        </div>
+                        <?php } ?>
+                        <?php if (!empty($socialOther)) { ?>
+                        <div style="margin-top:6px;padding-top:8px;border-top:1px dashed #e0e0e0;">
+                            <div style="font-size:12px;color:#777;margin-bottom:6px;"><?php echo iN_HelpSecure($LANG['other_social_links'] ?? 'Other Social Links'); ?></div>
+                            <?php foreach ($socialOther as $oL) { ?>
+                            <div style="display:flex;align-items:center;margin-bottom:6px;">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#555" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right:8px;flex-shrink:0;"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+                                <a href="<?php echo iN_HelpSecure($oL); ?>" target="_blank" rel="noopener noreferrer" style="color:#1e88e5;font-weight:500;font-size:14px;word-break:break-all;"><?php echo iN_HelpSecure($oL); ?></a>
+                            </div>
+                            <?php } ?>
                         </div>
                         <?php } ?>
                     </div>

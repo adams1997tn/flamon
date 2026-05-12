@@ -14,6 +14,8 @@
 
             $accountDeletionWorkerStatus = (string)$iN->iN_GetSetting('account_deletion_worker_status', '1');
             $accountDeletionWorkerStatus = $accountDeletionWorkerStatus === '0' ? '0' : '1';
+            $discoveryFeedStatus = (string)$iN->iN_GetSetting('discovery_feed_status', '0');
+            $discoveryFeedStatus = $discoveryFeedStatus === '1' ? '1' : '0';
             $accountDeletionWorkerEnvToken = getenv('ACCOUNT_DELETION_WORKER_TOKEN') ?: '';
             $accountDeletionWorkerToken = $accountDeletionWorkerEnvToken !== ''
                 ? $accountDeletionWorkerEnvToken
@@ -101,7 +103,8 @@
                 ['id' => 'send__email', 'name' => 'send__email', 'status' => $sendEmailForAll, 'label' => $LANG['send__email'], 'desc' => $LANG['send__email_not']],
                 ['id' => 'register_new', 'name' => 'register_new', 'status' => $userCanRegister, 'label' => $LANG['register'], 'desc' => $LANG['allow_disallow_register']],
                 ['id' => 'ipLimit', 'name' => 'ipLimit', 'status' => $ipLimitStatus, 'label' => $LANG['ip_limit'], 'desc' => $LANG['allow_disallow_register']],
-                ['id' => 'account_deletion_worker_status', 'name' => 'account_deletion_worker_status', 'status' => $accountDeletionWorkerStatus, 'label' => $LANG['account_delete_worker_toggle_label'], 'desc' => $LANG['account_delete_worker_toggle_desc']]
+                ['id' => 'account_deletion_worker_status', 'name' => 'account_deletion_worker_status', 'status' => $accountDeletionWorkerStatus, 'label' => $LANG['account_delete_worker_toggle_label'], 'desc' => $LANG['account_delete_worker_toggle_desc']],
+                ['id' => 'discovery_feed_status', 'name' => 'discovery_feed_status', 'status' => $discoveryFeedStatus, 'label' => ($LANG['discovery_feed_toggle_label'] ?? 'Global Discovery Feed'), 'desc' => ($LANG['discovery_feed_toggle_desc'] ?? 'When enabled, users see public posts from people they do not follow yet, mixed with their following feed.')]
             ];
 
             foreach ($toggles as $toggle) {

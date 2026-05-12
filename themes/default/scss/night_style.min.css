@@ -27798,25 +27798,7 @@ a.a_o_user_flw {
   padding: 10px;
 }
 .i_p_categoryp {
-  float: left;
-  width: fit-content;
-  background: #18191a;
-  border-radius: 5px;
-  color: #fff;
-  padding: 2px 4px;
-  font-size: 12px;
-  margin-right: 3px;
-  font-family: system-ui, -apple-system, sans-serif;
-}
-a.i_p_categoryp:hover {
-  text-decoration: none;
-  background-color: #242526;
-}
-.i_p_categoryp svg {
-  fill: #ffffff;
-  width: 10px;
-  height: 10px;
-  margin-right: 4px;
+  display: none !important;
 }
 .i_opennewtab {
   text-decoration: none;

@@ -818,6 +818,7 @@ class iN_UPDATES {
             'web_push_event_follow' => 'web_push_event_follow',
             'web_push_event_subscription' => 'web_push_event_subscription',
             'web_push_event_announcement' => 'web_push_event_announcement',
+            'discovery_feed_status' => 'discovery_feed_status',
 		];
         if (isset($map[$key])) {
             $column = $map[$key];
@@ -936,6 +937,7 @@ class iN_UPDATES {
             'web_push_event_follow' => ['column' => 'web_push_event_follow', 'type' => 'bool'],
             'web_push_event_subscription' => ['column' => 'web_push_event_subscription', 'type' => 'bool'],
             'web_push_event_announcement' => ['column' => 'web_push_event_announcement', 'type' => 'bool'],
+            'discovery_feed_status' => ['column' => 'discovery_feed_status', 'type' => 'int'],
 		];
 		if (!isset($map[$key])) {
 			return false;
@@ -2991,11 +2993,69 @@ public function iN_GetUploadedFilesIDs($uid, $imageName) {
 	/*Get All Friens and My Posts*/
     public function iN_AllFriendsPosts($uid, $lastPostID, $showingPost) {
         $showingPosts = (int)($showingPost ?? 0);
-        $params = [(int)$uid];
-        $more = '';
-        if (!empty($lastPostID)) { $more = ' AND P.post_id < ? '; $params[] = (int)$lastPostID; }
+        $uid = (int)$uid;
+        $lastPostID = !empty($lastPostID) ? (int)$lastPostID : 0;
+        $discoveryEnabled = (string)$this->iN_GetSetting('discovery_feed_status', '0') === '1';
         [$scheduledSql, $scheduledParams] = $this->scheduledVisibilityClause($uid, 'P');
         $linkSelect = $this->iN_PostLinkPreviewSelect();
+
+        if ($discoveryEnabled) {
+            // Discovery Feed: pull from the global pool of public posts mixed with the
+            // viewer's following feed so they see a LOT of posts from people they do
+            // not follow yet. Excludes the viewer's own posts and any posts from users
+            // involved in a block relationship with the viewer.
+            $params = [];
+
+            // Visibility: post is public OR owner is followed/subscribed
+            $visSql = "(P.who_can_see IN ('0','1') OR P.post_owner_id IN (
+                SELECT fr_two FROM i_friends WHERE fr_one = ? AND fr_status IN('flwr','subscriber')
+            ))";
+            $params[] = $uid;
+
+            // Exclude blocked relationships in either direction
+            $blockSql = "P.post_owner_id NOT IN (
+                SELECT blocked_iuid FROM i_user_blocks WHERE blocker_iuid = ?
+                UNION
+                SELECT blocker_iuid FROM i_user_blocks WHERE blocked_iuid = ?
+            )";
+            $params[] = $uid; $params[] = $uid;
+
+            // Exclude logged-in user's own posts
+            $params[] = $uid;
+
+            $cursorSql = '';
+            if ($lastPostID > 0) { $cursorSql = ' AND P.post_id < ?'; $params[] = $lastPostID; }
+
+            // Discovery feed pages 30 posts at a time. The UI hides infinite
+            // scroll and exposes a "See more posts" button that fetches the
+            // next 30 on demand.
+            $discoveryLimit = 30;
+
+            $sql = "SELECT DISTINCT P.post_id,P.shared_post_id,P.post_pined,P.comment_status,
+                    P.post_owner_id,P.post_text,P.post_file,P.post_created_time,P.scheduled_at,P.scheduled_status,
+                    P.who_can_see,P.post_want_status,P.url_slug,P.post_wanted_credit,
+                    P.post_status,P.post_type,P.hashtags{$linkSelect},
+                    U.iuid,U.i_username,U.i_user_fullname,U.user_avatar,U.user_gender,
+                    U.payout_method,U.last_login_time,U.user_verified_status,
+                    U.thanks_for_tip,U.user_frame,U.profile_category
+                FROM i_posts P
+                INNER JOIN i_users U ON P.post_owner_id = U.iuid AND U.uStatus IN('1','3')
+                WHERE P.post_type NOT IN('reels')
+                  AND P.post_status IN('0','1')
+                  AND $visSql
+                  AND $blockSql
+                  AND P.post_owner_id <> ?
+                  $cursorSql
+                  AND $scheduledSql
+                ORDER BY P.post_id DESC
+                LIMIT $discoveryLimit";
+            $rows = DB::all($sql, array_merge($params, $scheduledParams));
+            return !empty($rows) ? $rows : null;
+        }
+
+        $params = [$uid];
+        $more = '';
+        if ($lastPostID > 0) { $more = ' AND P.post_id < ? '; $params[] = $lastPostID; }
         $sql = "SELECT DISTINCT P.post_id,P.shared_post_id,P.post_pined,P.comment_status,
                 P.post_owner_id,P.post_text,P.post_file,P.post_created_time,P.scheduled_at,P.scheduled_status,
                 P.who_can_see,P.post_want_status,P.url_slug,P.post_wanted_credit,
@@ -8472,16 +8532,53 @@ public function iN_InsertNewVerificationRequest($userID, $cardIDPhoto, $Photo) {
         }
 	}
 	/*Accept Conditions Button by Clicking Next button*/
-public function iN_AcceptConditions($userID, $instagramUrl = '', $tiktokUrl = '') {
+public function iN_AcceptConditions($userID, $instagramUrl = '', $tiktokUrl = '', $facebookUrl = '', $youtubeUrl = '', array $otherLinks = array()) {
 		if ($this->iN_CheckUserExist($userID) == 1) {
-            DB::exec("UPDATE i_users SET certification_status = '2', condition_status = '2', instagram_url = ?, tiktok_url = ? WHERE iuid = ?", [
+            $this->iN_EnsureExtendedSocialColumns();
+            $otherJson = null;
+            if (!empty($otherLinks)) {
+                $clean = array();
+                foreach ($otherLinks as $lnk) {
+                    $lnk = trim((string)$lnk);
+                    if ($lnk !== '') { $clean[] = $lnk; }
+                }
+                if (!empty($clean)) {
+                    $otherJson = json_encode(array_values($clean), JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
+                }
+            }
+            DB::exec("UPDATE i_users SET certification_status = '2', condition_status = '2', instagram_url = ?, tiktok_url = ?, facebook_url = ?, youtube_url = ?, other_social_links = ? WHERE iuid = ?", [
                 $instagramUrl !== '' ? (string)$instagramUrl : null,
                 $tiktokUrl !== '' ? (string)$tiktokUrl : null,
+                $facebookUrl !== '' ? (string)$facebookUrl : null,
+                $youtubeUrl !== '' ? (string)$youtubeUrl : null,
+                $otherJson,
                 (int)$userID
             ]);
             return true;
         }
 	}
+
+    /**
+     * Ensure extended social-link columns exist on i_users (idempotent).
+     */
+    private function iN_EnsureExtendedSocialColumns(): void
+    {
+        static $ensured = false;
+        if ($ensured) { return; }
+        $columns = array(
+            'facebook_url'       => "varchar(255) NULL DEFAULT NULL",
+            'youtube_url'        => "varchar(255) NULL DEFAULT NULL",
+            'other_social_links' => "text NULL DEFAULT NULL",
+        );
+        foreach ($columns as $col => $ddl) {
+            if (!preg_match('/^[a-zA-Z0-9_]+$/', $col)) { continue; }
+            $row = DB::one("SHOW COLUMNS FROM i_users LIKE '" . $col . "'");
+            if (!$row) {
+                DB::exec("ALTER TABLE i_users ADD " . $col . " " . $ddl);
+            }
+        }
+        $ensured = true;
+    }
 	/*Check user Set Subscription Fees Before*/
 	public function iN_CheckUserSetSubscriptionFeesBefore($userID, $plan) {
 		if ($this->iN_CheckUserExist($userID) == '1') {
@@ -20553,6 +20650,96 @@ public function iN_InsertStorieSeen($userID, $storieID) {
         return false;
     }
 
+	/*Ensure Konnect columns exist*/
+    protected function iN_EnsureKonnectColumns() {
+        static $checked = false;
+        if ($checked) { return; }
+        $checked = true;
+        $columns = [
+            'konnect_payment_mode'   => "ENUM('0','1') NOT NULL DEFAULT '0'",
+            'konnect_active_pasive'  => "ENUM('0','1') NOT NULL DEFAULT '0'",
+            'konnect_test_api_key'   => "TEXT NULL",
+            'konnect_test_wallet_id' => "VARCHAR(64) NULL",
+            'konnect_live_api_key'   => "TEXT NULL",
+            'konnect_live_wallet_id' => "VARCHAR(64) NULL",
+            'konnect_webhook_secret' => "VARCHAR(128) NULL",
+            'konnect_currency'       => "VARCHAR(5) NOT NULL DEFAULT 'TND'",
+            'konnect_beta'           => "ENUM('0','1') NOT NULL DEFAULT '0'"
+        ];
+        foreach ($columns as $column => $definition) {
+            $exists = DB::col("SELECT COUNT(*) FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'i_payment_methods' AND COLUMN_NAME = ?", [$column]);
+            if (!$exists) {
+                DB::exec("ALTER TABLE i_payment_methods ADD COLUMN {$column} {$definition}");
+            }
+        }
+    }
+
+	/*Update Konnect Sandbox/Live Mode*/
+    public function iN_UpdateKonnectSendBoxMode($userID, $mode) {
+        if ($this->iN_CheckIsAdmin($userID) == 1) {
+            try {
+                DB::exec("UPDATE i_payment_methods SET konnect_payment_mode = ? WHERE payment_method_id = 1", [(string)$mode]);
+            } catch (Throwable $e) {
+                if (stripos($e->getMessage(), 'konnect') !== false) {
+                    $this->iN_EnsureKonnectColumns();
+                    DB::exec("UPDATE i_payment_methods SET konnect_payment_mode = ? WHERE payment_method_id = 1", [(string)$mode]);
+                } else { throw $e; }
+            }
+            return true;
+        }
+        return false;
+    }
+
+	/*Update Konnect Status*/
+    public function iN_UpdateKonnectStatus($userID, $mode) {
+        if ($this->iN_CheckIsAdmin($userID) == 1) {
+            try {
+                DB::exec("UPDATE i_payment_methods SET konnect_active_pasive = ? WHERE payment_method_id = 1", [(string)$mode]);
+            } catch (Throwable $e) {
+                if (stripos($e->getMessage(), 'konnect') !== false) {
+                    $this->iN_EnsureKonnectColumns();
+                    DB::exec("UPDATE i_payment_methods SET konnect_active_pasive = ? WHERE payment_method_id = 1", [(string)$mode]);
+                } else { throw $e; }
+            }
+            return true;
+        }
+        return false;
+    }
+
+	/*Update Konnect Beta*/
+    public function iN_UpdateKonnectBeta($userID, $mode) {
+        if ($this->iN_CheckIsAdmin($userID) == 1) {
+            try {
+                DB::exec("UPDATE i_payment_methods SET konnect_beta = ? WHERE payment_method_id = 1", [(string)$mode]);
+            } catch (Throwable $e) {
+                if (stripos($e->getMessage(), 'konnect') !== false) {
+                    $this->iN_EnsureKonnectColumns();
+                    DB::exec("UPDATE i_payment_methods SET konnect_beta = ? WHERE payment_method_id = 1", [(string)$mode]);
+                } else { throw $e; }
+            }
+            return true;
+        }
+        return false;
+    }
+
+	/*Update Konnect Details*/
+    public function iN_UpdateKonnectDetails($userID, $testApiKey, $testWalletId, $liveApiKey, $liveWalletId, $webhookSecret, $currency) {
+        if ($this->iN_CheckIsAdmin($userID) == 1) {
+            $params = [(string)$testApiKey, (string)$testWalletId, (string)$liveApiKey, (string)$liveWalletId, (string)$webhookSecret, (string)$currency];
+            $sql = "UPDATE i_payment_methods SET konnect_test_api_key = ?, konnect_test_wallet_id = ?, konnect_live_api_key = ?, konnect_live_wallet_id = ?, konnect_webhook_secret = ?, konnect_currency = ? WHERE payment_method_id = 1";
+            try {
+                DB::exec($sql, $params);
+            } catch (Throwable $e) {
+                if (stripos($e->getMessage(), 'konnect') !== false) {
+                    $this->iN_EnsureKonnectColumns();
+                    DB::exec($sql, $params);
+                } else { throw $e; }
+            }
+            return true;
+        }
+        return false;
+    }
+
     /*Ensure Paysafecard columns exist*/
     protected function iN_EnsurePaysafecardColumns() {
         static $checked = false;
@@ -23269,6 +23456,11 @@ public function iN_InsertNewReelsPost($uid, $postText, $urlSlug, $postFiles, $po
             $startFrom = (int) $startFrom;
             $limit = (int) $limit;
 
+            $musicCols = function_exists('dizzy_music_columns_present') && dizzy_music_columns_present()
+                ? ", P.music_track_id, P.music_provider, P.music_title, P.music_artist, P.music_url, P.music_cover_url, P.music_start_time, P.music_duration, P.music_volume, P.music_video_volume"
+                : "";
+            $overlayCol = function_exists('dizzy_overlays_column_present') && dizzy_overlays_column_present() ? ", P.post_overlays" : "";
+            $extrasCol = function_exists('dizzy_reel_extras_columns_present') && dizzy_reel_extras_columns_present() ? ", P.post_filter, P.post_video_speed" : "";
             $query = "
                 SELECT
                     P.post_id,
@@ -23280,6 +23472,8 @@ public function iN_InsertNewReelsPost($uid, $postText, $urlSlug, $postFiles, $po
                     U.i_username,
                     U.i_user_fullname,
                     U.user_avatar,
+                    U.payout_method,
+                    U.thanks_for_tip{$musicCols}{$overlayCol}{$extrasCol},
                     CASE
                         WHEN P.post_id = {$startFrom} THEN 0
                         ELSE 1
@@ -23288,12 +23482,25 @@ public function iN_InsertNewReelsPost($uid, $postText, $urlSlug, $postFiles, $po
                 INNER JOIN i_users U ON P.post_owner_id = U.iuid
                 WHERE P.post_type = 'reels'
                   AND (P.post_status = '1' OR P.post_owner_id = {$currentUserId})
+                  AND P.post_file IS NOT NULL
+                  AND P.post_file <> ''
+                  AND EXISTS (
+                      SELECT 1 FROM i_user_uploads UU
+                      WHERE UU.upload_id = CAST(SUBSTRING_INDEX(P.post_file, ',', 1) AS UNSIGNED)
+                        AND UU.uploaded_file_path IS NOT NULL
+                        AND UU.uploaded_file_path <> ''
+                  )
                 ORDER BY sort_order ASC, P.post_id DESC
                 LIMIT {$limit}
             ";
         } else {
             $limit = (int) $limit;
 
+            $musicCols = function_exists('dizzy_music_columns_present') && dizzy_music_columns_present()
+                ? ", P.music_track_id, P.music_provider, P.music_title, P.music_artist, P.music_url, P.music_cover_url, P.music_start_time, P.music_duration, P.music_volume, P.music_video_volume"
+                : "";
+            $overlayCol = function_exists('dizzy_overlays_column_present') && dizzy_overlays_column_present() ? ", P.post_overlays" : "";
+            $extrasCol = function_exists('dizzy_reel_extras_columns_present') && dizzy_reel_extras_columns_present() ? ", P.post_filter, P.post_video_speed" : "";
             $query = "
                 SELECT
                     P.post_id,
@@ -23304,11 +23511,21 @@ public function iN_InsertNewReelsPost($uid, $postText, $urlSlug, $postFiles, $po
                     P.post_wanted_credit,
                     U.i_username,
                     U.i_user_fullname,
-                    U.user_avatar
+                    U.user_avatar,
+                    U.payout_method,
+                    U.thanks_for_tip{$musicCols}{$overlayCol}{$extrasCol}
                 FROM i_posts P
                 INNER JOIN i_users U ON P.post_owner_id = U.iuid
                 WHERE P.post_type = 'reels'
                   AND (P.post_status = '1' OR P.post_owner_id = {$currentUserId})
+                  AND P.post_file IS NOT NULL
+                  AND P.post_file <> ''
+                  AND EXISTS (
+                      SELECT 1 FROM i_user_uploads UU
+                      WHERE UU.upload_id = CAST(SUBSTRING_INDEX(P.post_file, ',', 1) AS UNSIGNED)
+                        AND UU.uploaded_file_path IS NOT NULL
+                        AND UU.uploaded_file_path <> ''
+                  )
                 ORDER BY P.post_id DESC
                 LIMIT {$limit}
             ";

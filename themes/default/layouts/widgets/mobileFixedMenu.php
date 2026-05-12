@@ -76,12 +76,15 @@ $mfm_L = [
             </div>
 
             <!-- PROFILE -->
-            <div class="mobile_box mfm_item<?php echo $mfm_isProfile ? ' is-active' : ''; ?>">
+            <div class="mobile_box mfm_item mfm_profile<?php echo $mfm_isProfile ? ' is-active' : ''; ?>">
                 <a href="<?php echo filter_var($base_url, FILTER_VALIDATE_URL) . $userName; ?>" aria-label="<?php echo iN_HelpSecure($mfm_L['profile']); ?>">
-                    <div class="i_m_box_item transition flex_ tabing">
-                        <?php echo html_entity_decode($iN->iN_SelectedMenuIcon('83')); ?>
+                    <div class="i_m_box_item transition flex_ tabing mfm_avatar_wrap">
+                        <span class="mfm_avatar_ring" aria-hidden="true"></span>
+                        <span class="mfm_avatar_inner">
+                            <img class="mfm_avatar_img" src="<?php echo iN_HelpSecure($iN->iN_UserAvatar($userID, $base_url)); ?>" alt="">
+                        </span>
                     </div>
-                    <span class="mfm_label"><?php echo iN_HelpSecure($mfm_L['profile']); ?></span>
+                    <span class="mfm_label"></span>
                 </a>
             </div>
         </div>
@@ -242,7 +245,7 @@ $mfm_L = [
 }
 .mobile_footer_fixed_menu_container.mfm_v2 .mfm_label_fab {
     margin-top: -10px;
-    color: #f65169 !important;
+    color: #ffffff !important;
     font-weight: 700;
 }
 .mobile_footer_fixed_menu_container.mfm_v2 .mfm_center.is-active::before { display: none; }
@@ -291,4 +294,113 @@ body.night .mobile_footer_fixed_menu_container.mfm_v2 .mfm_fab,
 /* Neutralize legacy hover */
 .mobile_footer_fixed_menu_container.mfm_v2 .i_m_box_item:hover { background-color: transparent; }
 .mobile_footer_fixed_menu_container.mfm_v2 .mfm_item:hover .i_m_box_item { background: rgba(246,81,105,0.08); }
+
+/* =============================================================
+   Profile avatar — luxury animated gradient ring
+   ============================================================= */
+.mobile_footer_fixed_menu_container.mfm_v2 .mfm_profile .mfm_avatar_wrap {
+    position: relative;
+    width: 38px;
+    height: 38px;
+    padding: 0;
+    background: transparent !important;
+    border-radius: 50%;
+    overflow: visible;
+}
+.mobile_footer_fixed_menu_container.mfm_v2 .mfm_profile .mfm_avatar_ring {
+    position: absolute;
+    inset: -3px;
+    border-radius: 50%;
+    padding: 0;
+    background: conic-gradient(
+        from 0deg,
+        #f65169 0deg,
+        #ffb86b 90deg,
+        #e7c873 160deg,
+        #b06ab3 230deg,
+        #4568dc 300deg,
+        #f65169 360deg
+    );
+    -webkit-animation: mfm_ring_spin 4.5s linear infinite;
+            animation: mfm_ring_spin 4.5s linear infinite;
+    -webkit-mask: radial-gradient(closest-side, transparent calc(100% - 2.5px), #000 calc(100% - 2.5px));
+            mask: radial-gradient(closest-side, transparent calc(100% - 2.5px), #000 calc(100% - 2.5px));
+    box-shadow:
+        0 0 10px rgba(246, 81, 105, 0.35),
+        0 0 22px rgba(176, 106, 179, 0.25);
+    pointer-events: none;
+}
+.mobile_footer_fixed_menu_container.mfm_v2 .mfm_profile .mfm_avatar_ring::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: 50%;
+    background: conic-gradient(
+        from 180deg,
+        rgba(255,255,255,0) 0deg,
+        rgba(255,255,255,0.85) 30deg,
+        rgba(255,255,255,0) 60deg,
+        rgba(255,255,255,0) 360deg
+    );
+    -webkit-mask: radial-gradient(closest-side, transparent calc(100% - 2.5px), #000 calc(100% - 2.5px));
+            mask: radial-gradient(closest-side, transparent calc(100% - 2.5px), #000 calc(100% - 2.5px));
+    -webkit-animation: mfm_ring_shine 3s linear infinite;
+            animation: mfm_ring_shine 3s linear infinite;
+    opacity: 0.85;
+}
+.mobile_footer_fixed_menu_container.mfm_v2 .mfm_profile .mfm_avatar_inner {
+    position: absolute;
+    inset: 2px;
+    border-radius: 50%;
+    overflow: hidden;
+    background: #fff;
+    box-shadow: inset 0 0 0 2px #fff, 0 2px 6px rgba(15,17,23,0.18);
+    display: -webkit-box;
+    display: -ms-flexbox;
+    display: flex;
+}
+.mobile_footer_fixed_menu_container.mfm_v2 .mfm_profile .mfm_avatar_img {
+    width: 100%;
+    height: 100%;
+    -o-object-fit: cover;
+       object-fit: cover;
+    display: block;
+    border-radius: 50%;
+    -webkit-transition: transform 0.4s ease;
+    transition: transform 0.4s ease;
+}
+.mobile_footer_fixed_menu_container.mfm_v2 .mfm_profile:hover .mfm_avatar_img,
+.mobile_footer_fixed_menu_container.mfm_v2 .mfm_profile.is-active .mfm_avatar_img {
+    transform: scale(1.06);
+}
+.mobile_footer_fixed_menu_container.mfm_v2 .mfm_profile.is-active .mfm_avatar_ring {
+    box-shadow:
+        0 0 14px rgba(246, 81, 105, 0.55),
+        0 0 28px rgba(176, 106, 179, 0.4);
+    -webkit-animation-duration: 2.6s;
+            animation-duration: 2.6s;
+}
+.mobile_footer_fixed_menu_container.mfm_v2 .mfm_profile:hover .i_m_box_item,
+.mobile_footer_fixed_menu_container.mfm_v2 .mfm_profile .i_m_box_item:hover {
+    background: transparent !important;
+}
+@-webkit-keyframes mfm_ring_spin {
+    to { transform: rotate(360deg); }
+}
+@keyframes mfm_ring_spin {
+    to { transform: rotate(360deg); }
+}
+@-webkit-keyframes mfm_ring_shine {
+    to { transform: rotate(-360deg); }
+}
+@keyframes mfm_ring_shine {
+    to { transform: rotate(-360deg); }
+}
+@media (prefers-reduced-motion: reduce) {
+    .mobile_footer_fixed_menu_container.mfm_v2 .mfm_profile .mfm_avatar_ring,
+    .mobile_footer_fixed_menu_container.mfm_v2 .mfm_profile .mfm_avatar_ring::after {
+        -webkit-animation: none;
+                animation: none;
+    }
+}
 </style>

@@ -17,7 +17,16 @@ if (isset($reelsFeatureStatus) && (string)$reelsFeatureStatus !== '1') {
     include("header/meta.php");
     include("header/css.php");
     include("header/javascripts.php");
+    $rmlThemeName = isset($currentTheme) ? (string) $currentTheme : 'default';
+    $rmlMusicCssUrl = function_exists('dizzy_asset_url')
+        ? dizzy_asset_url('themes/' . $rmlThemeName . '/scss/reels_music.css', 'ver_rml_' . (string)$version)
+        : ($base_url . 'themes/' . $rmlThemeName . '/scss/reels_music.css?v=' . $version);
+    $rmlEditorCssUrl = function_exists('dizzy_asset_url')
+        ? dizzy_asset_url('themes/' . $rmlThemeName . '/scss/reels_editor.css', 'ver_rml_' . (string)$version)
+        : ($base_url . 'themes/' . $rmlThemeName . '/scss/reels_editor.css?v=' . $version);
     ?>
+    <link rel="stylesheet" href="<?php echo iN_HelpSecure($rmlMusicCssUrl); ?>">
+    <link rel="stylesheet" href="<?php echo iN_HelpSecure($rmlEditorCssUrl); ?>">
 </head>
 <body>
 <?php 

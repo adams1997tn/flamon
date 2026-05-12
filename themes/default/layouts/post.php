@@ -160,7 +160,7 @@
                     $pCt = $PROFILE_SUBCATEGORIES[$userProfileCategory];
                 }
 
-                $profileCategoryLink = '<a class="i_p_categoryp flex_ tabing_non_justify" href="' . $base_url . 'creators?creator=' . $userProfileCategory . '">' . $iN->iN_SelectedMenuIcon('65') . $pCt . '</a>- ';
+                $profileCategoryLink = '<a class="i_p_categoryp flex_ tabing_non_justify" href="' . $base_url . 'creators?creator=' . $userProfileCategory . '">' . $iN->iN_SelectedMenuIcon('65') . $pCt . '</a> ';
             }
             $postStyle = '';
             if(empty($userPostText)){

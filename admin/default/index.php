@@ -240,6 +240,10 @@ if ($pageFor) {
         case 'yookassa.php':
             include __DIR__ . '/sources/yookassa.php';
             break;
+        case 'konnect':
+        case 'konnect.php':
+            include __DIR__ . '/sources/konnect.php';
+            break;
         case 'epoch':
         case 'epoch.php':
             include __DIR__ . '/sources/epoch.php';

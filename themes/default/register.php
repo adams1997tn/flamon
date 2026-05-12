@@ -76,7 +76,6 @@ if ($registrationRoleModeValue === 'user_agency') {
         <div class="i_modal_content">
             <!--Register Header-->
             <div class="i_login_box_header">
-                <div class="i_login_box_wellcome_icon"><?php echo html_entity_decode($iN->iN_SelectedMenuIcon('2'));?></div>
                 <div class="i_welcome_back">
                     <div class="i_lBack"><?php echo iN_HelpSecure($LANG['sign_up']);?></div>
                     <div class="i_lnot"><?php echo iN_HelpSecure($LANG['try_site_for_free']);?></div>
@@ -90,20 +89,19 @@ if ($registrationRoleModeValue === 'user_agency') {
                 if($socialLogins){
                     echo '<!--Modal Social Login Content-->
                     <div class="i_modal_social_login_content">
-                        <div class="login-title"><span>'.$LANG['login-with'].'</span></div><div class="i_social-btns">';
+                        <div><span>'.'</span></div><div class="i_social-btns">';
                     foreach($socialLogins as $sL){
                         $sKey = $sL['s_key'] ?? null;;
                         $sIcon = $sL['s_icon'] ?? null;;
                     ?>
                     <div><a class="<?php echo iN_HelpSecure($sKey);?>-login" href="<?php echo iN_HelpSecure($base_url).$sKey;?>Login.php"><?php echo html_entity_decode($iN->iN_SelectedMenuIcon($sIcon));?><span><?php echo iN_HelpSecure($LANG[$sKey]);?></span></a></div>
-                <?php }echo '</div><div class="login-title"><span>'.$LANG['or-directly'].'</span></div>'; }
+                <?php }echo '</div><div><span>'.'</span></div>'; }
                 echo '</div>';
                 } ?>
                 <div class="i_warns">
                 <div class="i_error"></div>
                 </div>
             <!--/Register With-->
-            <div class="i_helper_title"><?php echo iN_HelpSecure($LANG['you_are']);?></div>
             <div class="i_direct_register i_register_box_">
             <form enctype="multipart/form-data" method="post" id='iregister' autocomplete="off">
                 <input type="hidden" name="registration_role_mode" value="<?php echo iN_HelpSecure($registrationRoleModeValue); ?>">

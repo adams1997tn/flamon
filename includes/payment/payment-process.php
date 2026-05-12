@@ -31,6 +31,12 @@ use App\Service\NowPaymentsService;
 use App\Service\PaysafecardService;
 use App\Service\YooKassaService;
 use App\Service\EpochService;
+use App\Service\KonnectService;
+
+// Ensure the standalone Konnect helper (with column-ensure utilities) is available.
+if (!class_exists('\\KonnectService', false)) {
+    require_once __DIR__ . '/KonnectService.php';
+}
 
 /*
  * Get instance of paytm service
@@ -113,6 +119,11 @@ $yookassaService = new YooKassaService();
 $epochService = new EpochService();
 
 /*
+ * Get instance of Konnect service
+ */
+$konnectService = new KonnectService();
+
+/*
  * Process a payment with anyone service
  */
 $paymentProcess = new PaymentProcess(
@@ -131,7 +142,8 @@ $paymentProcess = new PaymentProcess(
     $nowPaymentsService,
     $paysafecardService,
     $yookassaService,
-    $epochService
+    $epochService,
+    $konnectService
 );
 /*
  * Get instance of GUMP, its a validation library for PHP
@@ -431,6 +443,24 @@ if (isset($_POST) && count($_POST) > 0) {
 			}
 		} elseif ($paymentOption === 'yookassa' && (!isset($paymentData['status']) || $paymentData['status'] !== 'success')) {
 			DB::exec("DELETE FROM i_user_payments WHERE order_key = ? AND payer_iuid_fk = ?", [(string)$insertData['order_id'], (int)$userID]);
+		} elseif ($paymentOption === 'konnect' && isset($paymentData['status']) && $paymentData['status'] === 'success') {
+			// Best-effort: store Konnect's paymentRef for later reconciliation.
+			try {
+				if (\KonnectService::class) {
+					\KonnectService::ensureUserPaymentsColumns();
+				}
+			} catch (\Throwable $thIgnore) {}
+			$paymentRef = isset($paymentData['payment_ref']) ? (string) $paymentData['payment_ref'] : '';
+			if ($paymentRef !== '') {
+				try {
+					DB::exec(
+						"UPDATE i_user_payments SET konnect_payment_ref = ? WHERE order_key = ? AND payer_iuid_fk = ?",
+						[$paymentRef, (string) $insertData['order_id'], (int) $userID]
+					);
+				} catch (\Throwable $thIgnore) { /* column auto-ensured */ }
+			}
+		} elseif ($paymentOption === 'konnect' && (!isset($paymentData['status']) || $paymentData['status'] !== 'success')) {
+			DB::exec("DELETE FROM i_user_payments WHERE order_key = ? AND payer_iuid_fk = ?", [(string)$insertData['order_id'], (int)$userID]);
 		} elseif ($paymentOption === 'epoch' && isset($paymentData['status']) && $paymentData['status'] === 'success') {
 			$gatewayTransactionId = isset($paymentData['epoch_transaction_id']) ? (string) $paymentData['epoch_transaction_id'] : null;
 			$epochNonceValue = isset($paymentData['epoch_nonce']) ? (string) $paymentData['epoch_nonce'] : $epochNonce;
@@ -476,7 +506,7 @@ if (isset($_POST) && count($_POST) > 0) {
 			// on success instamojo, paystack, stripe, razorpay, iyzico & paypal response
 			//} else if () {
 
-		} elseif (in_array($paymentOption, ['paystack','iyzico','paypal','stripe','authorize-net','bitpay','mercadopago','moneroo','nowpayments','paysafecard','yookassa','epoch'], true)) {
+		} elseif (in_array($paymentOption, ['paystack','iyzico','paypal','stripe','authorize-net','bitpay','mercadopago','moneroo','nowpayments','paysafecard','yookassa','epoch','konnect'], true)) {
 
 			// return payment array on ajax request
 			echo json_encode($paymentData);

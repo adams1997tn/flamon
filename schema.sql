@@ -1016,7 +1016,8 @@ CREATE TABLE `i_configurations` (
   `didit_age_verif_min_age` int NOT NULL DEFAULT '18',
   `quick_actions_layout` enum('popup','inline') COLLATE utf8mb4_general_ci NOT NULL DEFAULT 'popup',
   `trend_hashtags_status` enum('0','1') COLLATE utf8mb4_general_ci NOT NULL DEFAULT '1',
-  `showingNumberOfTrendHashtags` int NOT NULL DEFAULT '10'
+  `showingNumberOfTrendHashtags` int NOT NULL DEFAULT '10',
+  `discovery_feed_status` int NOT NULL DEFAULT 0
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --

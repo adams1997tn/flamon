@@ -1,4 +1,9 @@
 <?php if (!isset($reelsFeatureStatus) || (string)$reelsFeatureStatus !== '1') { return; } ?>
+<?php
+// Make sure DB schema for overlays exists before showing the editor.
+if (function_exists('dizzy_ensure_overlays_column')) { dizzy_ensure_overlays_column(); }
+if (function_exists('dizzy_ensure_reel_extras_columns')) { dizzy_ensure_reel_extras_columns(); }
+?>
 <div class="th_middle">
   <div class="pageMiddle">
     <div class="live_item transition">
@@ -130,6 +135,13 @@
         <div class="i_warning_prmfl"><?php echo iN_HelpSecure($LANG['must_upload_files_for_premium']); ?></div>
         <div class="i_warning_unsupported"><?php echo iN_HelpSecure($LANG['unsupported_video_format']); ?></div>
         <div class="i_upload_warning"></div>
+        <div class="reel_music_picker">
+            <button type="button" class="rml-open rml-add-music-btn">
+                <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor" aria-hidden="true"><path d="M12 3v10.55A4 4 0 1 0 14 17V7h4V3z"/></svg>
+                <span><?php echo iN_HelpSecure($LANG['music_add_music'] ?? 'Add music'); ?></span>
+            </button>
+            <div id="rmlSelectedHolder" class="rml-selected-holder" style="display:none"></div>
+        </div>
         <div class="share_story_btn_cnt flex_ tabing transition publishReels" id="<?php echo iN_HelpSecure($videoID); ?>">
           <?php echo html_entity_decode($iN->iN_SelectedMenuIcon('26')); ?>
           <div class="pbtn"><?php echo iN_HelpSecure($LANG['publish']); ?></div>
@@ -141,4 +153,8 @@
   </div>
 </div>
 
+<?php include __DIR__ . '/musicLibraryModal.php'; ?>
+
+<script src="<?php echo iN_HelpSecure($base_url); ?>themes/<?php echo iN_HelpSecure($currentTheme); ?>/js/musicLibrary.js?v=<?php echo iN_HelpSecure($version); ?>"></script>
 <script src="<?php echo iN_HelpSecure($base_url); ?>themes/<?php echo iN_HelpSecure($currentTheme); ?>/js/saveReelsHandler.js?v=<?php echo iN_HelpSecure($version); ?>"></script>
+<script src="<?php echo iN_HelpSecure($base_url); ?>themes/<?php echo iN_HelpSecure($currentTheme); ?>/js/reelsEditor.js?v=<?php echo iN_HelpSecure($version); ?>"></script>

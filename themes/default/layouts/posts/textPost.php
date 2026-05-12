@@ -53,6 +53,18 @@ $checkPostBoosted = $checkPostBoosted ?? false;
                     <?php echo html_entity_decode($wCanSee); ?>
                     <?php echo html_entity_decode($timeStatus); ?>
                 </a>
+                <?php
+                // Discovery Feed: show small Follow button when viewer is logged in,
+                // not the author, and not already following the author.
+                if (!empty($logedIn) && $logedIn != 0
+                    && isset($userID, $userPostOwnerID)
+                    && (int)$userID !== (int)$userPostOwnerID
+                    && !$iN->iN_CheckUserIsInFLWR((int)$userID, (int)$userPostOwnerID)
+                    && !$iN->iN_CheckUserIsInSubscriber((int)$userID, (int)$userPostOwnerID)) {
+                    $followLabel = $LANG['follow'] ?? 'Follow';
+                    echo '<span class="i_fw' . iN_HelpSecure($userPostOwnerID) . ' i_post_follow_btn i_btn_like_item free_follow transition" data-u="' . iN_HelpSecure($userPostOwnerID) . '">+ ' . iN_HelpSecure($followLabel) . '</span>';
+                }
+                ?>
             </div>
 
             <div class="i_post_shared_time">
@@ -622,7 +634,7 @@ $checkPostBoosted = $checkPostBoosted ?? false;
 	    <?php }?>
     <?php echo html_entity_decode($TotallyPostComment); ?>
     <!--COMMENT FORM COMMENTS-->
-    <div class="i_post_comments_wrapper">
+    <div class="i_post_comments_wrapper i_post_comments_hidden" id="comments_wrap_<?php echo iN_HelpSecure($userPostID); ?>">
         <div class="i_post_comments_box<?php echo $logedIn == 0 ? ' nonePoint' : ''; ?>" id="all_comments_<?php echo iN_HelpSecure($userPostID); ?>">
             <!--USER COMMENTS-->
             <div class="i_user_comments" id="i_user_comments_<?php echo iN_HelpSecure($userPostID); ?>">

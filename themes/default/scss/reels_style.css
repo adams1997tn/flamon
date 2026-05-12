@@ -188,6 +188,138 @@ html, body {
       display: flex;
       align-items: center;
       gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .user .reel-username {
+      color: #fff;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      transition: opacity .2s ease, text-shadow .2s ease;
+    }
+    .user .reel-username:hover,
+    .user .reel-username:focus {
+      opacity: .9;
+      text-decoration: underline;
+      text-shadow: 0 1px 6px rgba(0,0,0,.45);
+    }
+    .user .reel-username strong {
+      font-weight: 700;
+      color: inherit;
+    }
+
+    /* ------------------------------------------------------------------
+     * Reel owner avatar (circular badge to the left of the username)
+     * ------------------------------------------------------------------ */
+    .user .reel-owner-avatar {
+      position: relative;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      flex-shrink: 0;
+      text-decoration: none;
+      cursor: pointer;
+      transition: transform .25s cubic-bezier(.34,1.56,.64,1), filter .25s ease;
+    }
+    .user .reel-owner-avatar:hover,
+    .user .reel-owner-avatar:focus {
+      transform: scale(1.08);
+      filter: drop-shadow(0 6px 14px rgba(246, 81, 105, .45));
+    }
+    .user .reel-owner-avatar:active { transform: scale(.96); }
+    .user .reel-owner-avatar-ring {
+      position: absolute;
+      inset: -3px;
+      border-radius: 50%;
+      background: conic-gradient(from 0deg,
+          #f65169 0%, #ffb86b 25%, #e7c873 45%,
+          #b06ab3 70%, #4568dc 92%, #f65169 100%);
+      -webkit-mask: radial-gradient(circle, transparent 56%, #000 58%);
+              mask: radial-gradient(circle, transparent 56%, #000 58%);
+      animation: reelOwnerAvatarSpin 4.5s linear infinite;
+    }
+    .user .reel-owner-avatar-inner {
+      position: relative;
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      overflow: hidden;
+      background: linear-gradient(135deg, #2a2f45, #1c1f2e);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, .35), inset 0 0 0 2px #0b0d14;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .user .reel-owner-avatar-inner img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+    .user .reel-owner-avatar-letter {
+      display: none;
+      color: #fff;
+      font-weight: 700;
+      font-size: 15px;
+      letter-spacing: .3px;
+      text-shadow: 0 1px 2px rgba(0,0,0,.4);
+    }
+    .user .reel-owner-avatar-fallback .reel-owner-avatar-letter {
+      display: inline-block;
+    }
+    .user .reel-owner-avatar-fallback {
+      background: linear-gradient(135deg, #f65169, #b06ab3 55%, #4568dc);
+    }
+    @keyframes reelOwnerAvatarSpin {
+      to { transform: rotate(1turn); }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .user .reel-owner-avatar-ring { animation: none; }
+      .user .reel-owner-avatar { transition: none; }
+    }
+
+    .user .reel_follow_btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+      font-weight: 600;
+      line-height: 1;
+      padding: 5px 12px;
+      border-radius: 999px;
+      cursor: pointer;
+      pointer-events: auto;
+      user-select: none;
+      letter-spacing: .2px;
+      transition: background-color .2s ease, color .2s ease, transform .15s ease, box-shadow .2s ease;
+    }
+    .user .reel_follow_btn.free_follow,
+    .user .reel_follow_btn.i_btn_like_item {
+      background: #fff;
+      color: #111;
+      border: 1px solid #fff;
+      box-shadow: 0 2px 8px rgba(0,0,0,.25);
+    }
+    .user .reel_follow_btn.free_follow:hover {
+      background: #f1f1f1;
+      transform: translateY(-1px);
+    }
+    .user .reel_follow_btn.f_p_follow,
+    .user .reel_follow_btn.i_btn_like_item_flw {
+      background: rgba(255,255,255,0.12);
+      color: #fff;
+      border: 1px solid rgba(255,255,255,0.55);
+      backdrop-filter: blur(4px);
+    }
+    .user .reel_follow_btn.f_p_follow:hover {
+      background: rgba(255,255,255,0.2);
+    }
+    .user .reel_follow_btn:active {
+      transform: scale(.96);
     }
 
     .follow-btn {

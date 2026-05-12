@@ -373,7 +373,7 @@ if (!empty($communityReshareDisabled)) {
     <!--/POST LIKE/COMMENT/SHARE/SOCIAL SHARE/SAVE BUTTONS-->
     <?php echo html_entity_decode($TotallyPostComment); ?>
     <!--COMMENT FORM COMMENTS-->
-    <div class="i_post_comments_wrapper">
+    <div class="i_post_comments_wrapper i_post_comments_hidden" id="comments_wrap_<?php echo iN_HelpSecure($userPostID); ?>">
         <div class="i_post_comments_box<?php echo $logedIn == 0 ? ' nonePoint' : ''; ?>">
             <!--USER COMMENTS-->
             <div class="i_user_comments" name="i_user_comments_<?php echo iN_HelpSecure($userPostID); ?>" id="i_user_comments_<?php echo iN_HelpSecure($userPostID); ?>">

@@ -984,6 +984,8 @@ $oneSignalRestApi = isset($inc['one_signal_rest_api']) ? $inc['one_signal_rest_a
 // Reels feature + max duration
 $reelsFeatureStatus = isset($inc['reels_feature_status']) ? (string)$inc['reels_feature_status'] : '1';
 $maxVideoDuration = isset($inc['max_video_duration']) ? (string)$inc['max_video_duration'] : '15';
+// Jamendo (reels music library) — admin-configurable Client ID.
+$jamendoClientId = isset($inc['jamendo_client_id']) ? (string)$inc['jamendo_client_id'] : '';
 $blogFeatureStatus = isset($inc['blog_feature_status']) ? (string)$inc['blog_feature_status'] : '1';
 $blogFeatureStatus = $blogFeatureStatus === '1' ? '1' : '0';
 $blogReactionsStatus = isset($inc['blog_reactions_status']) ? (string)$inc['blog_reactions_status'] : '1';
@@ -1668,6 +1670,19 @@ $iyziCoPaymentLiveApiKey = $method['iyzico_live_api_key'];
 $iyziCoPaymentLiveApiSecret = $method['iyzico_live_secret_key'];
 $iyziCoPaymentCurrency = $method['iyzico_crncy'];
 $iyziCoPaymentBeta = isset($method['iyzico_beta']) ? $method['iyzico_beta'] : '0';
+
+        /**
+         * Konnect Network payment configuration
+         */
+        $konnectPaymentMode    = $method['konnect_payment_mode']   ?? '0';
+        $konnectPaymentStatus  = $method['konnect_active_pasive']  ?? '0';
+        $konnectTestApiKey     = $method['konnect_test_api_key']   ?? '';
+        $konnectTestWalletId   = $method['konnect_test_wallet_id'] ?? '';
+        $konnectLiveApiKey     = $method['konnect_live_api_key']   ?? '';
+        $konnectLiveWalletId   = $method['konnect_live_wallet_id'] ?? '';
+        $konnectWebhookSecret  = $method['konnect_webhook_secret'] ?? '';
+        $konnectCurrency       = $method['konnect_currency']       ?? 'TND';
+        $konnectPaymentBeta    = $method['konnect_beta']           ?? '0';
 
         /**
          * Razorpay payment configuration

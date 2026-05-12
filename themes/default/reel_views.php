@@ -8,6 +8,9 @@ $userID = isset($userID) ? (int)$userID : 0;
 if (!isset($userAvatar) || $userAvatar === null) {
     $userAvatar = $base_url . 'uploads/avatars/no_gender.png';
 }
+// Ensure music columns exist before running queries that reference them.
+include_once __DIR__ . '/../../includes/music_helper.php';
+if (function_exists('dizzy_ensure_music_columns')) { dizzy_ensure_music_columns(); }
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -24,8 +27,13 @@ if (!isset($userAvatar) || $userAvatar === null) {
         'themes/' . $reelsThemeName . '/scss/reels_style.css',
         'ver_reels_' . (string) $version
     );
+    $reelsMusicStyleUrl = dizzy_asset_url(
+        'themes/' . $reelsThemeName . '/scss/reels_music.css',
+        'ver_rml_' . (string) $version
+    );
     ?>
     <link rel="stylesheet" href="<?php echo iN_HelpSecure($reelsStyleUrl); ?>">
+    <link rel="stylesheet" href="<?php echo iN_HelpSecure($reelsMusicStyleUrl); ?>">
 
 </head>
 <body class="reels-page-body <?php echo ($lightDark === 'dark') ? 'night-mode' : 'day-mode'; ?>" data-user-id="<?php echo isset($userID) ? iN_HelpSecure($userID) : '0'; ?>" data-hide-scroll-buttons="<?php echo iN_HelpSecure($LANG['hide_scroll_buttons'] ?? 'Hide scroll buttons'); ?>" data-show-scroll-buttons="<?php echo iN_HelpSecure($LANG['show_scroll_buttons'] ?? 'Show scroll buttons'); ?>">
@@ -114,6 +122,10 @@ $initialReels = $iN->iN_GetInitialReels($reelID, 2, isset($userID)? (int)$userID
     } else {
         $missingVideo = true;
     }
+    // Defense-in-depth: never render reels with missing video data.
+    // The SQL in iN_GetInitialReels already filters orphan reels; this guards
+    // against any race / cache returning a stale row.
+    if ($missingVideo) { continue; }
     $userPostOwnerID = $reel['post_owner_id'] ?? null;
     $userPostID = $reel['post_id'] ?? null;
     $userPostCommentAvailableStatus = $reel['comment_status'] ?? null;
@@ -235,13 +247,88 @@ $initialReels = $iN->iN_GetInitialReels($reelID, 2, isset($userID)? (int)$userID
                 </div>
             </div>
 
-            <video src="<?php echo $videoSrc; ?>" autoplay muted playsinline preload="auto" crossorigin="anonymous"></video>
+            <video src="<?php echo $videoSrc; ?>" autoplay muted playsinline preload="auto" crossorigin="anonymous"<?php if (!empty($reel['post_filter']) && $reel['post_filter'] !== 'none') { echo ' data-filter="' . htmlspecialchars($reel['post_filter']) . '"'; } if (!empty($reel['post_video_speed']) && (float)$reel['post_video_speed'] !== 1.0) { echo ' data-speed="' . htmlspecialchars((string)(float)$reel['post_video_speed']) . '"'; } ?>></video>
+            <?php echo dizzy_render_reel_overlays($reel['post_overlays'] ?? ''); ?>
+            <?php
+                $reelMusicTitle  = isset($reel['music_title']) ? (string)$reel['music_title'] : '';
+                $reelMusicArtist = isset($reel['music_artist']) ? (string)$reel['music_artist'] : '';
+                $reelMusicUrl    = isset($reel['music_url']) ? (string)$reel['music_url'] : '';
+                $reelMusicId     = isset($reel['music_track_id']) ? (string)$reel['music_track_id'] : '';
+                $reelMusicCover  = isset($reel['music_cover_url']) ? (string)$reel['music_cover_url'] : '';
+                $reelMusicStart  = isset($reel['music_start_time']) ? (float)$reel['music_start_time'] : 0.0;
+                $reelMusicLen    = isset($reel['music_duration']) ? (float)$reel['music_duration'] : 0.0;
+                $reelMusicVol    = isset($reel['music_volume']) ? (float)$reel['music_volume'] : 0.8;
+                $reelMusicVidVol = isset($reel['music_video_volume']) ? (float)$reel['music_video_volume'] : 0.5;
+                $hasMusic = ($reelMusicUrl !== '' && $reelMusicTitle !== '');
+            ?>
+            <?php if ($hasMusic) { ?>
+                <audio class="reel-music-audio"
+                       src="<?php echo iN_HelpSecure(dizzy_music_proxied_url($reelMusicUrl)); ?>"
+                       preload="metadata"
+                       data-start="<?php echo iN_HelpSecure((string)$reelMusicStart); ?>"
+                       data-duration="<?php echo iN_HelpSecure((string)$reelMusicLen); ?>"
+                       data-volume="<?php echo iN_HelpSecure((string)$reelMusicVol); ?>"
+                       data-video-volume="<?php echo iN_HelpSecure((string)$reelMusicVidVol); ?>"></audio>
+            <?php } ?>
 
             <div class="reel-ui">
                 <div class="left-ui">
                     <div class="user">
-                        <strong><?php echo iN_HelpSecure($userPostOwnerUserFullName); ?></strong>
+                        <?php
+                            $reelOwnerAvatar = $iN->iN_UserAvatar((int)$userPostOwnerID, $base_url);
+                            $reelOwnerInitial = function_exists('mb_substr')
+                                ? mb_strtoupper(mb_substr((string)$userPostOwnerUserFullName, 0, 1))
+                                : strtoupper(substr((string)$userPostOwnerUserFullName, 0, 1));
+                            if ($reelOwnerInitial === '') { $reelOwnerInitial = '?'; }
+                        ?>
+                        <a class="reel-owner-avatar"
+                           href="<?php echo iN_HelpSecure($base_url . $userPostOwnerUsername); ?>"
+                           aria-label="<?php echo iN_HelpSecure($userPostOwnerUserFullName); ?>">
+                            <span class="reel-owner-avatar-ring" aria-hidden="true"></span>
+                            <span class="reel-owner-avatar-inner">
+                                <img src="<?php echo iN_HelpSecure($reelOwnerAvatar); ?>"
+                                     alt="<?php echo iN_HelpSecure($userPostOwnerUserFullName); ?>"
+                                     loading="lazy"
+                                     onerror="this.style.display='none';this.parentNode.classList.add('reel-owner-avatar-fallback');">
+                                <span class="reel-owner-avatar-letter"><?php echo iN_HelpSecure($reelOwnerInitial); ?></span>
+                            </span>
+                        </a>
+                        <a class="reel-username" href="<?php echo iN_HelpSecure($base_url . $userPostOwnerUsername); ?>">
+                            <strong><?php echo iN_HelpSecure($userPostOwnerUserFullName); ?></strong>
+                        </a>
+                        <?php
+                        if (!empty($logedIn) && $logedIn != 0
+                            && isset($userID, $reelOwnerId)
+                            && (int)$userID !== (int)$reelOwnerId) {
+                            $reelIsFollowing = $iN->iN_CheckUserIsInFLWR((int)$userID, (int)$reelOwnerId)
+                                || $iN->iN_CheckUserIsInSubscriber((int)$userID, (int)$reelOwnerId);
+                            if ($reelIsFollowing) {
+                                $reelFollowClass = 'i_btn_like_item_flw f_p_follow';
+                                $reelFollowLabel = $LANG['im_following'] ?? 'Following';
+                            } else {
+                                $reelFollowClass = 'i_btn_like_item free_follow';
+                                $reelFollowLabel = $LANG['follow'] ?? 'Follow';
+                            }
+                            ?>
+                            <span class="reel_follow_btn i_fw<?php echo iN_HelpSecure($reelOwnerId); ?> <?php echo iN_HelpSecure($reelFollowClass); ?> transition"
+                                  data-u="<?php echo iN_HelpSecure($reelOwnerId); ?>"><?php echo iN_HelpSecure($reelFollowLabel); ?></span>
+                        <?php } ?>
                     </div>
+                    <?php if ($hasMusic) { ?>
+                        <a class="reel-music-label" href="<?php echo iN_HelpSecure($base_url . 'reels?sound=' . urlencode($reelMusicId)); ?>" title="<?php echo iN_HelpSecure(($reelMusicTitle ?: '') . ' — ' . ($reelMusicArtist ?: '')); ?>">
+                            <span class="reel-music-disc"<?php echo $reelMusicCover !== '' ? ' style="background-image:url(\'' . iN_HelpSecure($reelMusicCover) . '\')"' : ''; ?>></span>
+                            <span class="reel-music-note">
+                                <svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor" aria-hidden="true"><path d="M12 3v10.55A4 4 0 1 0 14 17V7h4V3z"/></svg>
+                            </span>
+                            <span class="reel-music-marquee">
+                                <span class="reel-music-marquee-inner">
+                                    <?php echo iN_HelpSecure($reelMusicTitle); ?><?php if ($reelMusicArtist !== '') { ?> · <?php echo iN_HelpSecure($reelMusicArtist); ?><?php } ?>
+                                    &nbsp;&nbsp;•&nbsp;&nbsp;
+                                    <?php echo iN_HelpSecure($reelMusicTitle); ?><?php if ($reelMusicArtist !== '') { ?> · <?php echo iN_HelpSecure($reelMusicArtist); ?><?php } ?>
+                                </span>
+                            </span>
+                        </a>
+                    <?php } ?>
                     <?php
                     if (!empty($reelPostText)) {
                         $cleanedText = $iN->sanitize_output_preserve_linebreaks(
@@ -264,6 +351,28 @@ $initialReels = $iN->iN_GetInitialReels($reelID, 2, isset($userID)? (int)$userID
                     <?php } ?>
                 </div>
                 <div class="right-ui">
+                    <?php
+                    $reelPayoutMethod = $reel['payout_method'] ?? null;
+                    if ($logedIn != 0 && !empty($reelPayoutMethod) && (int)$userPostOwnerID !== (int)$userID) {
+                        $reelTipCount = (int) DB::col(
+                            "SELECT COUNT(*) FROM i_user_payments
+                             WHERE payed_post_id_fk = ? AND payment_type = 'tips' AND payment_status = 'ok'",
+                            [(int)$userPostID]
+                        );
+                        ?>
+                        <div class="action i_post_item_btn transition reel_tip_btn in_tips <?php echo iN_HelpSecure($loginFormClass); ?>"
+                             data-id="<?php echo iN_HelpSecure($userPostOwnerID); ?>"
+                             data-ppid="<?php echo iN_HelpSecure($userPostID); ?>"
+                             title="<?php echo iN_HelpSecure($LANG['send_tip'] ?? 'Send a tip'); ?>">
+                            <?php echo html_entity_decode($iN->iN_SelectedMenuIcon('144')); ?>
+                        </div>
+                        <span class="lp_sum reel_tip_count flex_ tabing reel_tip_count_<?php echo iN_HelpSecure($userPostID); ?>">
+                            <?php echo $reelTipCount > 0 ? iN_HelpSecure($reelTipCount) : ''; ?>
+                        </span>
+                        <div class="i_thanks_bubble_cont tip_<?php echo iN_HelpSecure($userPostID); ?>" style="display:none;position:absolute;pointer-events:none;">
+                            <div class="i_bubble"><?php echo iN_HelpSecure($LANG['thanks_for_tip'] ?? 'Thanks for the tip.'); ?></div>
+                        </div>
+                    <?php } ?>
                     <div class="action i_post_item_btn <?php echo iN_HelpSecure($likeClass); ?> <?php echo iN_HelpSecure($loginFormClass); ?>"  id="p_l_<?php echo iN_HelpSecure($userPostID); ?>" data-id="<?php echo iN_HelpSecure($userPostID); ?>"><?php echo html_entity_decode($likeIcon); ?></div>
                     <span class="lp_sum flex_ tabing" id="lp_sum_<?php echo iN_HelpSecure($userPostID); ?>"><?php echo iN_HelpSecure($likeSum); ?></span>
                     <div class="action i_post_item_btn transition in_comment"  id="<?php echo iN_HelpSecure($userPostID); ?>"><?php echo html_entity_decode($iN->iN_SelectedMenuIcon('20')); ?></div>
@@ -436,6 +545,160 @@ $initialReels = $iN->iN_GetInitialReels($reelID, 2, isset($userID)? (int)$userID
 </div>
 <script src="<?php echo iN_HelpSecure($base_url); ?>themes/<?php echo iN_HelpSecure($currentTheme); ?>/js/reelsHandler.js?v=<?php echo iN_HelpSecure($version); ?>"></script>
 <script src="<?php echo iN_HelpSecure($base_url); ?>themes/<?php echo iN_HelpSecure($currentTheme); ?>/js/reelsScrollhandler.js?v=<?php echo iN_HelpSecure($version); ?>"></script>
+<script src="<?php echo iN_HelpSecure($base_url); ?>themes/<?php echo iN_HelpSecure($currentTheme); ?>/js/reelsMusicSync.js?v=<?php echo iN_HelpSecure($version); ?>"></script>
+<script>
+// Reels Tips: bump per-reel tip count and pulse icon on successful p_sendTip ajax response
+(function ($) {
+    if (!$ || !$.fn) { return; }
+    $(document).ajaxSuccess(function (event, xhr, settings) {
+        try {
+            var data = (settings && settings.data) ? String(settings.data) : '';
+            if (data.indexOf('f=p_sendTip') === -1) { return; }
+            var m = data.match(/(?:^|&)tpid=(\d+)/);
+            if (!m) { return; }
+            var pid = m[1];
+            var resp = xhr.responseJSON || {};
+            try { if (!resp.status && xhr.responseText) { resp = JSON.parse(xhr.responseText); } } catch (e) { resp = {}; }
+            if (resp.status !== 'ok') { return; }
+            var $count = $('.reel_tip_count_' + pid);
+            if ($count.length) {
+                var current = parseInt($count.text().trim(), 10);
+                if (isNaN(current)) { current = 0; }
+                $count.text(current + 1);
+            }
+            var $btn = $('.reel .reel_tip_btn[data-ppid="' + pid + '"]');
+            if ($btn.length) {
+                $btn.addClass('tip-pulse');
+                setTimeout(function () { $btn.removeClass('tip-pulse'); }, 600);
+            }
+        } catch (e) { /* swallow */ }
+    });
+}(window.jQuery));
+</script>
+<script>
+/* ------------------------------------------------------------------
+ * Reel overlay alignment fix
+ * ------------------------------------------------------------------
+ * Overlay coordinates are stored as fractions (0..1) of the recording
+ * canvas. On playback the video may be letter/pillar-boxed inside its
+ * container (object-fit: contain) or cropped (object-fit: cover).
+ * If we just stretch .reel-overlays to the full container, stickers /
+ * emojis / text end up floating in the empty bars next to the video.
+ *
+ * This routine measures the actual displayed video rectangle for each
+ * reel and sizes .reel-overlays to match, so every overlay element
+ * stays anchored to its position on the real video frame regardless
+ * of screen size, device, or video aspect ratio.
+ * ------------------------------------------------------------------ */
+(function () {
+    function fitOverlayToVideo(video) {
+        if (!video || video.tagName !== 'VIDEO') { return; }
+        var inner = video.closest ? video.closest('.reel-inner') : null;
+        if (!inner) { return; }
+        var overlay = inner.querySelector(':scope > .reel-overlays');
+        if (!overlay) { return; }
+
+        var cw = inner.clientWidth;
+        var ch = inner.clientHeight;
+        if (cw <= 0 || ch <= 0) { return; }
+
+        var vw = video.videoWidth  || 0;
+        var vh = video.videoHeight || 0;
+
+        var fitStyle = (window.getComputedStyle && getComputedStyle(video).objectFit) || 'cover';
+        var w, h, left, top;
+
+        if (vw > 0 && vh > 0 && fitStyle === 'contain') {
+            var rContain = Math.min(cw / vw, ch / vh);
+            w = vw * rContain;
+            h = vh * rContain;
+        } else {
+            // 'cover' (or unknown metadata): the visible frame fills the
+            // entire container in both axes; overlays should also span it.
+            w = cw;
+            h = ch;
+        }
+
+        left = (cw - w) / 2;
+        top  = (ch - h) / 2;
+
+        overlay.style.position = 'absolute';
+        overlay.style.inset    = 'auto';
+        overlay.style.width    = w + 'px';
+        overlay.style.height   = h + 'px';
+        overlay.style.left     = left + 'px';
+        overlay.style.top      = top + 'px';
+    }
+
+    function fitAllReels(root) {
+        var scope = root && root.querySelectorAll ? root : document;
+        var videos = scope.querySelectorAll('.reel-inner > video');
+        for (var i = 0; i < videos.length; i++) {
+            fitOverlayToVideo(videos[i]);
+        }
+    }
+
+    function bindVideo(video) {
+        if (!video || video.dataset.overlayBound === '1') { return; }
+        video.dataset.overlayBound = '1';
+        var run = function () { fitOverlayToVideo(video); };
+        video.addEventListener('loadedmetadata', run);
+        video.addEventListener('loadeddata',    run);
+        video.addEventListener('resize',        run);
+        // Initial attempt in case metadata is already available.
+        run();
+
+        if (typeof ResizeObserver !== 'undefined') {
+            try {
+                var inner = video.closest('.reel-inner');
+                if (inner) {
+                    var ro = new ResizeObserver(function () { run(); });
+                    ro.observe(inner);
+                }
+            } catch (e) { /* noop */ }
+        }
+    }
+
+    function bindAllReels(root) {
+        var scope = root && root.querySelectorAll ? root : document;
+        var videos = scope.querySelectorAll('.reel-inner > video');
+        for (var i = 0; i < videos.length; i++) { bindVideo(videos[i]); }
+    }
+
+    function init() {
+        bindAllReels(document);
+
+        window.addEventListener('resize',           function () { fitAllReels(document); });
+        window.addEventListener('orientationchange', function () { fitAllReels(document); });
+
+        // Pick up reels appended later by load-next-reel.php.
+        if (typeof MutationObserver !== 'undefined') {
+            var mo = new MutationObserver(function (mutations) {
+                for (var i = 0; i < mutations.length; i++) {
+                    var nodes = mutations[i].addedNodes;
+                    if (!nodes) { continue; }
+                    for (var j = 0; j < nodes.length; j++) {
+                        var n = nodes[j];
+                        if (!n || n.nodeType !== 1) { continue; }
+                        if (n.matches && n.matches('.reel-inner > video')) {
+                            bindVideo(n);
+                        } else if (n.querySelectorAll) {
+                            bindAllReels(n);
+                        }
+                    }
+                }
+            });
+            mo.observe(document.body, { childList: true, subtree: true });
+        }
+    }
+
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', init);
+    } else {
+        init();
+    }
+})();
+</script>
 
 </body>
 </html>

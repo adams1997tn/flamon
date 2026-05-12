@@ -109,28 +109,7 @@
     </div>
 </div>
 
-<div class="pwa_install_popup" id="pwaInstallPopup" aria-hidden="true">
-    <div class="pwa_install_popup_overlay" id="pwaInstallPopupOverlay"></div>
-    <div class="pwa_install_popup_card" role="dialog" aria-modal="true" aria-labelledby="pwaInstallPopupTitle" aria-describedby="pwaInstallPopupDesc">
-        <button type="button" class="pwa_install_popup_close" id="pwaInstallPopupClose" aria-label="<?php echo iN_HelpSecure($LANG['close']); ?>">
-            <?php echo html_entity_decode($iN->iN_SelectedMenuIcon('5')); ?>
-        </button>
-        <div class="pwa_install_popup_title" id="pwaInstallPopupTitle">
-            <?php echo iN_HelpSecure($LANG['pwa_popup_title'] ?? 'Install App'); ?>
-        </div>
-        <div class="pwa_install_popup_desc" id="pwaInstallPopupDesc">
-            <?php echo iN_HelpSecure($LANG['pwa_popup_desc_default'] ?? 'Add this app to your home screen for faster access and a better full-screen experience.'); ?>
-        </div>
-        <div class="pwa_install_popup_actions">
-            <button type="button" class="pwa_install_popup_btn pwa_install_popup_btn_secondary" id="pwaInstallPopupLater">
-                <?php echo iN_HelpSecure($LANG['pwa_popup_later'] ?? 'Maybe later'); ?>
-            </button>
-            <button type="button" class="pwa_install_popup_btn pwa_install_popup_btn_primary" id="pwaInstallPopupAction">
-                <?php echo iN_HelpSecure($LANG['pwa_install_app']); ?>
-            </button>
-        </div>
-    </div>
-</div>
+
 
 <?php if ($logedIn == 1) { ?>
     <audio id="notification-sound-mes" class="sound-controls" preload="none">

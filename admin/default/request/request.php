@@ -854,8 +854,37 @@ if (!function_exists('iN_admin_openai_health_check')) {
             echo iN_HelpSecure($LANG['noway_desc']);
         }
     }
+        if ($type == 'saveJamendoClientId') {
+            if ($iN->iN_CheckIsAdmin($userID) != 1) {
+                header('Content-Type: application/json; charset=utf-8');
+                echo json_encode(['status' => 'error', 'message' => 'forbidden']);
+                exit();
+            }
+            $clientId = isset($_POST['client_id']) ? trim((string)$_POST['client_id']) : '';
+            // Allow alphanumerics, underscores and dashes only — Jamendo IDs are short hex strings.
+            if ($clientId !== '' && !preg_match('/^[A-Za-z0-9_-]{1,64}$/', $clientId)) {
+                header('Content-Type: application/json; charset=utf-8');
+                echo json_encode(['status' => 'error', 'message' => 'invalid_format']);
+                exit();
+            }
+            if (!function_exists('dizzy_ensure_music_columns')) {
+                require_once dirname(dirname(dirname(__DIR__))) . '/includes/music_helper.php';
+            }
+            dizzy_ensure_music_columns();
+            try {
+                DB::exec("UPDATE i_configurations SET jamendo_client_id = ? WHERE configuration_id = 1", [$clientId]);
+            } catch (Throwable $e) {
+                error_log('[saveJamendoClientId] ' . $e->getMessage());
+                header('Content-Type: application/json; charset=utf-8');
+                echo json_encode(['status' => 'error', 'message' => 'db_error: ' . $e->getMessage()]);
+                exit();
+            }
+            header('Content-Type: application/json; charset=utf-8');
+            echo json_encode(['status' => 'ok']);
+            exit();
+        }
+
         if ($type == 'license_init') {
-            $envatoUsername = isset($_POST['envato_username']) ? trim((string) $_POST['envato_username']) : '';
             $purchaseCode = isset($_POST['purchase_code']) ? trim((string) $_POST['purchase_code']) : '';
             $envatoItemId = isset($_POST['envato_item_id']) ? (int) $_POST['envato_item_id'] : (int) LicenseHelper::ENVATO_ITEM_ID;
             if ($envatoUsername === '' || $purchaseCode === '') {
@@ -2610,6 +2639,19 @@ if (!function_exists('iN_admin_openai_health_check')) {
 			}
 		}
 	}
+	/*Update Discovery Feed Status*/
+	if ($type == 'discovery_feed_status') {
+		if (in_array($_POST['mod'], $statusValue)) {
+			$mod = $iN->iN_Secure($_POST['mod']);
+			$discoveryValue = ($mod === '1' || $mod === 'yes') ? '1' : '0';
+			$saved = $iN->iN_SetSetting('discovery_feed_status', $discoveryValue);
+			if ($saved) {
+				exit('200');
+			} else {
+				echo '404';
+			}
+		}
+	}
 	/*Email Settings*/
 	if ($type == 'emailSettings') {
 			$updateSmtpMail = $iN->iN_Secure($_POST['smtpmail']);
@@ -3834,6 +3876,59 @@ if (!function_exists('iN_admin_openai_health_check')) {
 			$iyziCurrency = $iN->iN_Secure($_POST['iyzico_crncy']);
 			$updateIyziCoDetails = $iN->iN_UpdateIyziCoDetails($userID, $iN->iN_Secure($iyziTestSecretKey), $iN->iN_Secure($iyziTestApiKey), $iN->iN_Secure($iyziLiveApiKey), $iN->iN_Secure($iyziLiveApiSeckretKey), $iN->iN_Secure($iyziCurrency));
 			if ($updateIyziCoDetails) {
+				exit('200');
+			} else {
+				echo iN_HelpSecure($LANG['noway_desc']);
+			}
+		}
+	}
+/*Update Konnect Mode (Test/Live)*/
+	if ($type == 'konnect_mode') {
+		if (isset($_POST['mod']) && in_array($_POST['mod'], $statusValue, true)) {
+			$mod = $iN->iN_Secure($_POST['mod']);
+			$updateKonnectMode = $iN->iN_UpdateKonnectSendBoxMode($userID, $iN->iN_Secure($mod));
+			if ($updateKonnectMode) {
+				exit('200');
+			} else {
+				echo iN_HelpSecure($LANG['noway_desc']);
+			}
+		}
+	}
+/*Update Konnect Status*/
+	if ($type == 'konnect_status') {
+		if (isset($_POST['mod']) && in_array($_POST['mod'], $statusValue, true)) {
+			$mod = $iN->iN_Secure($_POST['mod']);
+			$updateKonnectStatus = $iN->iN_UpdateKonnectStatus($userID, $iN->iN_Secure($mod));
+			if ($updateKonnectStatus) {
+				exit('200');
+			} else {
+				echo iN_HelpSecure($LANG['noway_desc']);
+			}
+		}
+	}
+/*Update Konnect Beta*/
+	if ($type == 'konnect_beta') {
+		if (isset($_POST['mod']) && in_array($_POST['mod'], $statusValue, true)) {
+			$mod = $iN->iN_Secure($_POST['mod']);
+			$updateKonnectBeta = $iN->iN_UpdateKonnectBeta($userID, $iN->iN_Secure($mod));
+			if ($updateKonnectBeta) {
+				exit('200');
+			} else {
+				echo iN_HelpSecure($LANG['noway_desc']);
+			}
+		}
+	}
+/*Update Konnect Details*/
+	if ($type == 'updateKonnect') {
+		if (isset($_POST['konnectTestApiKey']) && isset($_POST['konnectTestWalletId']) && isset($_POST['konnectLiveApiKey']) && isset($_POST['konnectLiveWalletId']) && isset($_POST['konnect_crncy'])) {
+			$konnectTestApiKeyP = $iN->iN_Secure($_POST['konnectTestApiKey']);
+			$konnectTestWalletIdP = $iN->iN_Secure($_POST['konnectTestWalletId']);
+			$konnectLiveApiKeyP = $iN->iN_Secure($_POST['konnectLiveApiKey']);
+			$konnectLiveWalletIdP = $iN->iN_Secure($_POST['konnectLiveWalletId']);
+			$konnectWebhookSecretP = isset($_POST['konnectWebhookSecret']) ? $iN->iN_Secure($_POST['konnectWebhookSecret']) : '';
+			$konnectCurrencyP = $iN->iN_Secure($_POST['konnect_crncy']);
+			$updateKonnectDetails = $iN->iN_UpdateKonnectDetails($userID, $konnectTestApiKeyP, $konnectTestWalletIdP, $konnectLiveApiKeyP, $konnectLiveWalletIdP, $konnectWebhookSecretP, $konnectCurrencyP);
+			if ($updateKonnectDetails) {
 				exit('200');
 			} else {
 				echo iN_HelpSecure($LANG['noway_desc']);

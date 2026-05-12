@@ -39,6 +39,8 @@ class PaymentProcess
     protected $yookassaService = null;
     /** @var object|null */
     protected $epochService = null;
+    /** @var object|null */
+    protected $konnectService = null;
  
 
     public function __construct(...$services)
@@ -83,6 +85,8 @@ class PaymentProcess
                 $this->yookassaService = $service;
             } elseif ($service instanceof \App\Service\EpochService) {
                 $this->epochService = $service;
+            } elseif ($service instanceof \App\Service\KonnectService) {
+                $this->konnectService = $service;
             }
         }
     }
@@ -189,6 +193,12 @@ class PaymentProcess
             } else {
                 $processResponse = $this->epochService->processEpochRequest($request);
             }
+            return $processResponse;
+        } elseif ($request['paymentOption'] == 'konnect') {
+            if (!$this->konnectService) {
+                return ['status' => 'error', 'message' => 'Konnect service is not configured'];
+            }
+            $processResponse = $this->konnectService->processKonnectRequest($request);
             return $processResponse;
         }
     }

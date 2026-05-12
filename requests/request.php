@@ -2398,12 +2398,196 @@ if ($type == 'upload') {
 			$hashT = $iN->iN_hashtag($text);
 			$postFromData = $iN->iN_InsertNewReelsPost($userID, $iN->iN_Secure($text), $slug, $file, $userWhoCanSeePost, $iN->url_Hash($hashT), $iN->iN_Secure($premiumPointAmount), $autoApprovePostStatus);
 	        if ($postFromData) {
+	            // Inline music attach: save selection in the same request so there's no race
+	            // with the navigation that follows on the client side.
+	            if (!empty($_POST['music_meta'])) {
+	                try {
+	                    include_once dirname(__DIR__) . '/includes/music_helper.php';
+	                    if (dizzy_ensure_music_columns()) {
+	                        $meta = json_decode((string)$_POST['music_meta'], true);
+	                        if (is_array($meta) && !empty($meta['id'])) {
+	                            $track = dizzy_music_get_track((string)$meta['id']);
+	                            if ($track) {
+	                                $start    = isset($meta['start']) ? max(0.0, (float)$meta['start']) : 0.0;
+	                                $duration = isset($meta['duration']) ? max(0.0, (float)$meta['duration']) : 0.0;
+	                                if ($duration <= 0 || $duration > 90) {
+	                                    $duration = min(60.0, (float)($track['duration'] ?? 60));
+	                                }
+	                                $vol    = isset($meta['volume']) ? max(0.0, min(1.0, (float)$meta['volume'])) : 0.8;
+	                                $vidVol = isset($meta['video_volume']) ? max(0.0, min(1.0, (float)$meta['video_volume'])) : 0.5;
+	                                DB::exec(
+	                                    "UPDATE i_posts SET
+	                                        music_track_id = ?, music_provider = ?, music_title = ?, music_artist = ?,
+	                                        music_url = ?, music_cover_url = ?,
+	                                        music_start_time = ?, music_duration = ?,
+	                                        music_volume = ?, music_video_volume = ?
+	                                     WHERE post_id = ? AND post_owner_id = ? LIMIT 1",
+	                                    [
+	                                        (string)$track['id'], (string)$track['provider'],
+	                                        (string)$track['title'], (string)$track['artist'],
+	                                        (string)$track['audio_url'], (string)$track['cover_url'],
+	                                        $start, $duration, $vol, $vidVol,
+	                                        (int)$postFromData['post_id'], (int)$userID,
+	                                    ]
+	                                );
+	                            }
+	                        }
+	                    }
+	                } catch (Throwable $e) {
+	                    error_log('[insertNewReel music] ' . $e->getMessage());
+	                }
+	            }
 	            rq_debug('insertNewReel:success', ['post_id' => $postFromData['post_id'] ?? null, 'file' => $file]);
+	            // Save overlays JSON (text/emoji editor data) when provided.
+	            if (!empty($_POST['overlays'])) {
+	                try {
+	                    include_once dirname(__DIR__) . '/includes/music_helper.php';
+	                    if (dizzy_ensure_overlays_column()) {
+	                        $raw = (string)$_POST['overlays'];
+	                        $arr = json_decode($raw, true);
+	                        if (is_array($arr)) {
+	                            // Whitelist + size cap.
+	                            $clean = [];
+	                            $allowedAnims = ['none','fade','zoom','bounce','slide-up','slide-down','slide-left','slide-right','pulse','spin','shake','neon','typewriter'];
+	                            foreach ($arr as $o) {
+	                                if (!is_array($o)) continue;
+	                                $type = isset($o['type']) ? (string)$o['type'] : '';
+	                                if (!in_array($type, ['text', 'emoji', 'gif', 'sticker'], true)) continue;
+	                                $src = (string)($o['src'] ?? '');
+	                                if ($type === 'gif' || $type === 'sticker') {
+	                                    if (!preg_match('#^https?://[^\s<>"\']{4,800}\.(gif|png|webp|jpg|jpeg)(\?[^\s<>"\']{0,200})?$#i', $src)) continue;
+	                                } else {
+	                                    $src = '';
+	                                }
+	                                $anim    = (string)($o['anim'] ?? 'none');
+	                                $animOut = (string)($o['animOut'] ?? 'none');
+	                                if (!in_array($anim, $allowedAnims, true))    $anim = 'none';
+	                                if (!in_array($animOut, $allowedAnims, true)) $animOut = 'none';
+	                                $clean[] = [
+	                                    'type'    => $type,
+	                                    'text'    => mb_substr((string)($o['text'] ?? ''), 0, 200),
+	                                    'src'     => $src,
+	                                    'x'       => max(0, min(1, (float)($o['x'] ?? 0.5))),
+	                                    'y'       => max(0, min(1, (float)($o['y'] ?? 0.5))),
+	                                    'scale'   => max(0.2, min(6, (float)($o['scale'] ?? 1))),
+	                                    'rot'     => max(-360, min(360, (float)($o['rot'] ?? 0))),
+	                                    'color'   => preg_match('/^#[0-9a-fA-F]{3,8}$/', (string)($o['color'] ?? '')) ? (string)$o['color'] : '#ffffff',
+	                                    'bg'      => in_array((string)($o['bg'] ?? '0'), ['0','1','2','3'], true) ? (string)$o['bg'] : '0',
+	                                    'font'    => in_array((string)($o['font'] ?? ''), ['', 'serif', 'mono', 'cursive'], true) ? (string)($o['font'] ?? '') : '',
+	                                    'anim'    => $anim,
+	                                    'animOut' => $animOut,
+	                                    'start'   => max(0, (float)($o['start'] ?? 0)),
+	                                    'end'     => max(0, (float)($o['end'] ?? 0)),
+	                                    'z'       => max(0, min(9999, (int)($o['z'] ?? 0))),
+	                                ];
+	                                if (count($clean) >= 25) break;
+	                            }
+	                            $json = json_encode($clean, JSON_UNESCAPED_UNICODE);
+	                            if ($json !== false && strlen($json) <= 65000) {
+	                                DB::exec(
+	                                    "UPDATE i_posts SET post_overlays = ? WHERE post_id = ? AND post_owner_id = ? LIMIT 1",
+	                                    [$json, (int)$postFromData['post_id'], (int)$userID]
+	                                );
+	                            }
+	                        }
+	                    }
+	                } catch (Throwable $e) { error_log('[insertNewReel overlays] ' . $e->getMessage()); }
+	            }
+	            // Save filter/speed extras when provided.
+	            if (isset($_POST['filter']) || isset($_POST['speed'])) {
+	                try {
+	                    include_once dirname(__DIR__) . '/includes/music_helper.php';
+	                    if (function_exists('dizzy_ensure_reel_extras_columns') && dizzy_ensure_reel_extras_columns()) {
+	                        $allowedFilters = ['none', 'vivid', 'warm', 'cool', 'bw', 'vintage', 'dramatic'];
+	                        $filter = (string)($_POST['filter'] ?? 'none');
+	                        if (!in_array($filter, $allowedFilters, true)) $filter = 'none';
+	                        $speed = (float)($_POST['speed'] ?? 1);
+	                        if ($speed < 0.25 || $speed > 4) $speed = 1.0;
+	                        DB::exec(
+	                            "UPDATE i_posts SET post_filter = ?, post_video_speed = ? WHERE post_id = ? AND post_owner_id = ? LIMIT 1",
+	                            [$filter === 'none' ? null : $filter, $speed, (int)$postFromData['post_id'], (int)$userID]
+	                        );
+	                    }
+	                } catch (Throwable $e) { error_log('[insertNewReel extras] ' . $e->getMessage()); }
+	            }
+	            // Optional: duplicate the upload into i_user_stories so the reel
+	            // also appears in the user's story tray.
+	            if (!empty($_POST['also_story'])) {
+	                try {
+	                    $upload = DB::one(
+	                        "SELECT uploaded_file_path, upload_tumbnail_file_path, uploaded_x_file_path, uploaded_file_ext
+	                         FROM i_user_uploads WHERE upload_id = ? AND iuid_fk = ? LIMIT 1",
+	                        [(int)$file, (int)$userID]
+	                    );
+	                    if ($upload) {
+	                        $iN->iN_insertUploadedSotieFiles(
+	                            $userID,
+	                            (string)$upload['uploaded_file_path'],
+	                            (string)$upload['upload_tumbnail_file_path'],
+	                            (string)$upload['uploaded_x_file_path'],
+	                            (string)$upload['uploaded_file_ext']
+	                        );
+	                    }
+	                } catch (Throwable $e) { error_log('[insertNewReel also_story] ' . $e->getMessage()); }
+	            }
 	            echo 'REELS_ID:' . $file;
                 exit();
 	        }
 	        rq_debug('insertNewReel:failed');
 	    }
+	}
+	/* Attach selected music to a freshly-created reel post (called right after insertNewReel). */
+	if ($type == 'attachReelMusic') {
+	    if (isset($reelsFeatureStatus) && (string)$reelsFeatureStatus !== '1') { exit('reels_disabled'); }
+	    if (empty($logedIn) || (int)$logedIn !== 1) { exit('auth_required'); }
+	    include_once dirname(__DIR__) . '/includes/music_helper.php';
+	    if (!dizzy_ensure_music_columns()) { exit('schema_error'); }
+
+	    $fileIds = isset($_POST['file']) ? (string)$_POST['file'] : '';
+	    $trackId = isset($_POST['track_id']) ? trim((string)$_POST['track_id']) : '';
+	    if ($fileIds === '' || $trackId === '') { exit('400'); }
+
+	    $parts = explode(',', rtrim($fileIds, ','));
+	    $primaryFile = (int) ($parts[0] ?? 0);
+	    if ($primaryFile <= 0) { exit('400'); }
+
+	    $post = DB::one(
+	        "SELECT post_id FROM i_posts
+	          WHERE post_owner_id = ? AND post_type = 'reels'
+	            AND FIND_IN_SET(?, post_file) > 0
+	          ORDER BY post_id DESC LIMIT 1",
+	        [(int)$userID, (string)$primaryFile]
+	    );
+	    if (empty($post['post_id'])) { exit('404'); }
+
+	    $track = dizzy_music_get_track($trackId);
+	    if (!$track) { exit('not_found'); }
+
+	    $start    = isset($_POST['start']) ? max(0.0, (float)$_POST['start']) : 0.0;
+	    $duration = isset($_POST['duration']) ? max(0.0, (float)$_POST['duration']) : 0.0;
+	    if ($duration <= 0 || $duration > 90) {
+	        $duration = min(60.0, (float)($track['duration'] ?? 60));
+	    }
+	    $vol    = isset($_POST['volume']) ? max(0.0, min(1.0, (float)$_POST['volume'])) : 0.8;
+	    $vidVol = isset($_POST['video_volume']) ? max(0.0, min(1.0, (float)$_POST['video_volume'])) : 0.5;
+
+	    DB::exec(
+	        "UPDATE i_posts SET
+	            music_track_id = ?, music_provider = ?, music_title = ?, music_artist = ?,
+	            music_url = ?, music_cover_url = ?,
+	            music_start_time = ?, music_duration = ?,
+	            music_volume = ?, music_video_volume = ?
+	         WHERE post_id = ? AND post_owner_id = ? LIMIT 1",
+	        [
+	            (string)$track['id'], (string)$track['provider'],
+	            (string)$track['title'], (string)$track['artist'],
+	            (string)$track['audio_url'], (string)$track['cover_url'],
+	            $start, $duration, $vol, $vidVol,
+	            (int)$post['post_id'], (int)$userID,
+	        ]
+	    );
+	    echo '200';
+	    exit();
 	}
 	/*INSERT NEW POST*/
 	if ($type == 'newPost') {
@@ -2669,7 +2853,7 @@ if ($type == 'upload') {
                     }else if(isset($PROFILE_SUBCATEGORIES[$userProfileCategory])){
                         $pCt = isset($PROFILE_SUBCATEGORIES[$userProfileCategory]) ? $PROFILE_SUBCATEGORIES[$userProfileCategory] : NULL;
                     }
-                    $profileCategoryLink = '<a class="i_p_categoryp flex_ tabing_non_justify" href="'.$base_url.'creators?creator='.$userProfileCategory.'">'.$iN->iN_SelectedMenuIcon('65').$pCt.'</a>- ';
+                    $profileCategoryLink = '<a class="i_p_categoryp flex_ tabing_non_justify" href="'.$base_url.'creators?creator='.$userProfileCategory.'">'.$iN->iN_SelectedMenuIcon('65').$pCt.'</a> ';
                 }
 				$onlySubs = '';
 				$premiumPost = '';
@@ -4039,10 +4223,10 @@ if ($type == 'upload') {
 			if ($insertPostSave) {
 				if ($insertPostSave == 'svp') {
 					$status = '200';
-					$text = $iN->iN_SelectedMenuIcon('63');
+					$text = html_entity_decode($iN->iN_SelectedMenuIcon('63'));
 				} else {
 					$status = '404';
-					$text = $iN->iN_SelectedMenuIcon('22');
+					$text = html_entity_decode($iN->iN_SelectedMenuIcon('22'));
 				}
 			} else {
 				$status = '';
@@ -8557,24 +8741,46 @@ if ($type == 'upload') {
 	if ($type == 'acceptConditions') {
 		$instagramUrl = trim((string)($iN->iN_Secure($_POST['instagram_url'] ?? '')));
 		$tiktokUrl = trim((string)($iN->iN_Secure($_POST['tiktok_url'] ?? '')));
+		$facebookUrl = trim((string)($iN->iN_Secure($_POST['facebook_url'] ?? '')));
+		$youtubeUrl = trim((string)($iN->iN_Secure($_POST['youtube_url'] ?? '')));
+
+		$otherLinks = array();
+		if (isset($_POST['other_social_links']) && is_array($_POST['other_social_links'])) {
+			foreach ($_POST['other_social_links'] as $oLnk) {
+				$oLnk = trim((string)$iN->iN_Secure($oLnk));
+				if ($oLnk !== '') {
+					$otherLinks[] = $oLnk;
+				}
+			}
+		}
 
 		// At least one social account required
-		if ($instagramUrl === '' && $tiktokUrl === '') {
+		if ($instagramUrl === '' && $tiktokUrl === '' && $facebookUrl === '' && $youtubeUrl === '' && empty($otherLinks)) {
 			echo 'social_required';
 			exit();
 		}
 
 		// Validate URLs
-		if ($instagramUrl !== '' && !filter_var($instagramUrl, FILTER_VALIDATE_URL)) {
-			echo 'invalid_url';
-			exit();
+		$toValidate = array($instagramUrl, $tiktokUrl, $facebookUrl, $youtubeUrl);
+		foreach ($toValidate as $u) {
+			if ($u !== '' && !filter_var($u, FILTER_VALIDATE_URL)) {
+				echo 'invalid_url';
+				exit();
+			}
 		}
-		if ($tiktokUrl !== '' && !filter_var($tiktokUrl, FILTER_VALIDATE_URL)) {
-			echo 'invalid_url';
-			exit();
+		foreach ($otherLinks as $u) {
+			if (!filter_var($u, FILTER_VALIDATE_URL)) {
+				echo 'invalid_url';
+				exit();
+			}
 		}
 
-		$conditionsAccept = $iN->iN_AcceptConditions($userID, $instagramUrl, $tiktokUrl);
+		// Cap extras to a sane upper bound
+		if (count($otherLinks) > 20) {
+			$otherLinks = array_slice($otherLinks, 0, 20);
+		}
+
+		$conditionsAccept = $iN->iN_AcceptConditions($userID, $instagramUrl, $tiktokUrl, $facebookUrl, $youtubeUrl, $otherLinks);
 		if ($conditionsAccept) {
 			echo '200';
 		}

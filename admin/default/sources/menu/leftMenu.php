@@ -643,6 +643,7 @@
                       'coinpayment_settings',
                       'mercadopago',
                       'yookassa',
+                      'konnect',
                       'epoch',
                       'moneroo',
                       'nowpayments',
@@ -721,6 +722,11 @@
                           'slug' => 'yookassa',
                           'label' => $LANG['yookassa_payment'],
                           'active' => 'yookassa',
+                      ],
+                      [
+                          'slug' => 'konnect',
+                          'label' => $LANG['konnect_payment'] ?? 'Konnect Network',
+                          'active' => 'konnect',
                       ],
                       [
                           'slug' => 'epoch',

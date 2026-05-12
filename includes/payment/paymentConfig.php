@@ -94,6 +94,15 @@ global $yookassaLiveSecretKey;
 global $yookassaWebhookSecret;
 global $yookassaCurrency;
 global $yookassaPaymentBeta;
+global $konnectPaymentMode;
+global $konnectPaymentStatus;
+global $konnectTestApiKey;
+global $konnectTestWalletId;
+global $konnectLiveApiKey;
+global $konnectLiveWalletId;
+global $konnectWebhookSecret;
+global $konnectCurrency;
+global $konnectPaymentBeta;
 global $epochPaymentMode;
 global $epochPaymentStatus;
 global $epochPiCode;
@@ -131,6 +140,22 @@ if (class_exists('DB')) {
     } catch (Throwable $th) {
         $__paymentMethodRow = [];
     }
+}
+
+// Ensure Konnect columns exist on first run (graceful auto-migration).
+if (is_array($__paymentMethodRow) && !array_key_exists('konnect_payment_mode', $__paymentMethodRow)) {
+    try {
+        if (class_exists('iN_UPDATES') && isset($db) && $db) {
+            $__pc_iN_kn = new iN_UPDATES($db);
+            if (method_exists($__pc_iN_kn, 'iN_EnsureKonnectColumns')) {
+                $__rm = new ReflectionMethod($__pc_iN_kn, 'iN_EnsureKonnectColumns');
+                $__rm->setAccessible(true);
+                $__rm->invoke($__pc_iN_kn);
+            }
+            unset($__pc_iN_kn);
+            $__paymentMethodRow = DB::one("SELECT * FROM i_payment_methods WHERE payment_method_id = 1") ?: $__paymentMethodRow;
+        }
+    } catch (Throwable $__th) { /* ignore – defaults will be used */ }
 }
 
 if (!function_exists('__pc_assign_if_empty')) {
@@ -253,6 +278,15 @@ __pc_assign_if_empty($yookassaLiveSecretKey, $__paymentMethodRow, 'yookassa_live
 __pc_assign_if_empty($yookassaWebhookSecret, $__paymentMethodRow, 'yookassa_webhook_secret', '');
 __pc_assign_if_empty($yookassaCurrency, $__paymentMethodRow, 'yookassa_currency', 'RUB');
 __pc_assign_if_empty($yookassaPaymentBeta, $__paymentMethodRow, 'yookassa_beta', '0');
+__pc_assign_if_empty($konnectPaymentMode, $__paymentMethodRow, 'konnect_payment_mode', '0');
+__pc_assign_if_empty($konnectPaymentStatus, $__paymentMethodRow, 'konnect_active_pasive', '0');
+__pc_assign_if_empty($konnectTestApiKey, $__paymentMethodRow, 'konnect_test_api_key', '');
+__pc_assign_if_empty($konnectTestWalletId, $__paymentMethodRow, 'konnect_test_wallet_id', '');
+__pc_assign_if_empty($konnectLiveApiKey, $__paymentMethodRow, 'konnect_live_api_key', '');
+__pc_assign_if_empty($konnectLiveWalletId, $__paymentMethodRow, 'konnect_live_wallet_id', '');
+__pc_assign_if_empty($konnectWebhookSecret, $__paymentMethodRow, 'konnect_webhook_secret', '');
+__pc_assign_if_empty($konnectCurrency, $__paymentMethodRow, 'konnect_currency', 'TND');
+__pc_assign_if_empty($konnectPaymentBeta, $__paymentMethodRow, 'konnect_beta', '0');
 __pc_assign_if_empty($epochPaymentMode, $__paymentMethodRow, 'epoch_payment_mode', '0');
 __pc_assign_if_empty($epochPaymentStatus, $__paymentMethodRow, 'epoch_active_pasive', '0');
 __pc_assign_if_empty($epochPiCode, $__paymentMethodRow, 'epoch_pi_code', '');
@@ -546,6 +580,25 @@ $inoraPaymentConfig = [
                 'cancelUrl'                     => 'payment-response.php',
                 'postbackUrl'                   => 'epoch_webhook.php',
                 'privateItems'                  => ['postbackSecret']
+            ],
+            'konnect' => [
+                'enable'                        => ((int) $konnectPaymentStatus === 1),
+                'testMode'                      => ((int) $konnectPaymentMode !== 1),
+                'gateway'                       => 'Konnect',
+                'currency'                      => $konnectCurrency,
+                'currencySymbol'                => __pc_currency_symbol($konnectCurrency, $konnectCurrency),
+                'testApiKey'                    => $konnectTestApiKey,
+                'testWalletId'                  => $konnectTestWalletId,
+                'liveApiKey'                    => $konnectLiveApiKey,
+                'liveWalletId'                  => $konnectLiveWalletId,
+                'webhookSecret'                 => $konnectWebhookSecret,
+                'sandboxApiBaseUrl'             => 'https://api.preprod.konnect.network/api/v2',
+                'productionApiBaseUrl'          => 'https://api.konnect.network/api/v2',
+                'callbackUrl'                   => 'payment-response.php',
+                'successUrl'                    => 'payment-response.php',
+                'cancelUrl'                     => 'payment-response.php',
+                'webhookUrl'                    => 'konnect_webhook.php',
+                'privateItems'                  => ['testApiKey', 'liveApiKey', 'webhookSecret']
             ]
         ],
     ],

@@ -141,7 +141,7 @@ $LANG = array(
 	'google' => 'Google',
 	'or-directly' => 'ou avec votre email',
 	'username-or-email' => 'Pseudo ou e-mail',
-	'username-or-email-ex' => 'e.g: john or john@hotmail.com',
+	'username-or-email-ex' => 'Username or Email address',
 	'password' => 'Mot de passe',
 	'login' => 'Login',
 	'not-member-yet' => 'Pas encore inscrit.e ?  <a href="' . $base_url . 'Inscription">Inscription gratuite</a>',

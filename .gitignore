@@ -32,3 +32,13 @@ includes/logs/
 # Local DB credentials - never commit
 includes/connect.php
 
+
+# --- deploy junk (local only, not for server/git) ---
+*.bak
+*.sql
+!schema.sql
+!newUpdateShema.sql
+reel.mp4
+_music_diag.php
+_tmp_user.php
+__pycache__/

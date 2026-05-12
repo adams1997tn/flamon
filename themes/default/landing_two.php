@@ -281,11 +281,7 @@ $featureCards = [
                 <p class="tagline"><?php echo strtolower(iN_HelpSecure($siteName));?></p>
                 <h1><?php echo iN_HelpSecure($LANG['landing_title']);?></h1>
                 <p class="lede"><?php echo iN_HelpSecure($LANG['landing_desc']);?></p>
-                <div class="hero-claim">
-                    <div class="hero-claim__prefix"><?php echo preg_replace( "#^[^:/.]*[:/]+#i", "", $base_url );?></div>
-                    <input type="text" id="clName" placeholder="<?php echo iN_HelpSecure($LANG['username']);?>" autocomplete="off">
-                    <button type="button" class="hero-claim__btn claimname"><?php echo iN_HelpSecure($LANG['claim']);?></button>
-                </div>
+               
                 <div class="hero-claim__errors">
                     <div class="error_report unmempt"><?php echo iN_HelpSecure($LANG['username_should_not_be_empty']);?></div>
                     <div class="error_report unmexist"><?php echo iN_HelpSecure($LANG['try_different_username']);?></div>
